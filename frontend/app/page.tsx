@@ -1,5 +1,5 @@
 import Image from "next/image";
-import AdminPage from "./pages/AdminPage"
+import AdminPage from "./pages/AdminPage/AdminPage"
 
 export default function Home() {
   return (

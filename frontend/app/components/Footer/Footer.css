@@ -1,6 +1,6 @@
 #footer-container {
     width: 100%;
-    margin: 0 auto;
+    margin: auto auto 0 auto;
     background-color: #323232;
     display: flex;
     justify-content: space-between;

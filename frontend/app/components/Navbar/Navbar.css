@@ -4,6 +4,9 @@
     flex-wrap: wrap;
     background-color: #323232;
     justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
 #nav-left-container {
