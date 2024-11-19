@@ -13,9 +13,6 @@ def add_test_data(email, password):
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
 
-    # Create a test user
-    email = email #'testuser@example.com'
-    password = password #'password123'
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
     user = User(
@@ -29,7 +26,6 @@ def add_test_data(email, password):
     session.commit()
     print(f"User '{email}' added.")
 
-    # Create test recipes
     recipe1 = Recipe(
         RecipeID=generate_uuid(),
         UserID=user.UserID,
@@ -50,7 +46,6 @@ def add_test_data(email, password):
     session.commit()
     print("Recipes added.")
 
-    # Add ingredients to recipes
     ingredients1 = [
         Ingredient(
             IngredientID=generate_uuid(),

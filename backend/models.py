@@ -1,8 +1,7 @@
 from sqlalchemy import (
     create_engine, Column, String, Boolean, Integer, ForeignKey, Text, UniqueConstraint
 )
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import declarative_base, relationship, sessionmaker
+from sqlalchemy.orm import declarative_base, relationship
 import uuid
 
 Base = declarative_base()
@@ -89,7 +88,6 @@ class Bookmark(Base):
     user = relationship('User', back_populates='bookmarks')
     recipe = relationship('Recipe', back_populates='bookmarks')
 
-
 class ShoppingListItem(Base):
     __tablename__ = 'shopping_list_items'
 
@@ -97,4 +95,3 @@ class ShoppingListItem(Base):
     UserID = Column(String(36), ForeignKey('users.UserID'), nullable=False)
     IngredientName = Column(String, nullable=False)
     user = relationship('User', back_populates='shopping_list_items')
-
