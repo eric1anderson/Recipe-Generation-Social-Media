@@ -9,7 +9,7 @@ router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
 @router.get('/recipes', response_class=HTMLResponse)
-async def recipes(request: Request, db: Session = Depends(get_db)):
+def recipes(request: Request, db: Session = Depends(get_db)):
     if 'user_id' not in request.session:
         return RedirectResponse(url='/login', status_code=302)
     user = db.query(User).filter_by(UserID=request.session['user_id']).first()
@@ -23,7 +23,7 @@ async def recipes(request: Request, db: Session = Depends(get_db)):
     )
 
 @router.get('/add_to_shopping_list/{recipe_id}')
-async def add_to_shopping_list(request: Request, recipe_id, db: Session = Depends(get_db)):
+def add_to_shopping_list(request: Request, recipe_id, db: Session = Depends(get_db)):
     if 'user_id' not in request.session:
         return RedirectResponse(url='/login', status_code=302)
     recipe = db.query(Recipe).filter_by(RecipeID=str(recipe_id)).first()
@@ -47,7 +47,7 @@ async def add_to_shopping_list(request: Request, recipe_id, db: Session = Depend
     return RedirectResponse(url='/shopping_list', status_code=302)
 
 @router.get('/shopping_list', response_class=HTMLResponse)
-async def view_shopping_list_get(request: Request, db: Session = Depends(get_db)):
+def view_shopping_list_get(request: Request, db: Session = Depends(get_db)):
     if 'user_id' not in request.session:
         return RedirectResponse(url='/login', status_code=302)
     user = db.query(User).filter_by(UserID=request.session['user_id']).first()
@@ -91,7 +91,7 @@ async def view_shopping_list_post(request: Request, db: Session = Depends(get_db
     )
 
 @router.get('/save_shopping_list')
-async def save_shopping_list(request: Request, db: Session = Depends(get_db)):
+def save_shopping_list(request: Request, db: Session = Depends(get_db)):
     if 'user_id' not in request.session:
         return RedirectResponse(url='/login', status_code=302)
     shopping_list_items = db.query(ShoppingListItem).filter_by(UserID=request.session['user_id']).all()
