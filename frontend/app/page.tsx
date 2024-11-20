@@ -25,7 +25,13 @@ export default function Login() {
       console.log("here response", response)
       
       if (response.ok) {
-        router.push('/user-page');
+        const data = await response.json();
+        // console.log("role: ", data.role)
+        if(data.role) {
+          router.push('/user-page');
+        } else {
+          router.push('/admin-page');
+        }
       } else {
         const data = await response.json();
         setError(data.detail || 'Invalid email or password');
