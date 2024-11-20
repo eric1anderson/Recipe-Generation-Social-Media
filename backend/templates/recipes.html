@@ -6,7 +6,7 @@
     {% for recipe in recipes %}
         <li>
             {{ recipe.RecipeName }}
-            - <a href="{{ url_for('add_to_shopping_list', recipe_id=recipe.RecipeID) }}">Add to Shopping List</a>
+            - <a href="{{ request.url_for('add_to_shopping_list', recipe_id=recipe.RecipeID) }}">Add to Shopping List</a>
         </li>
     {% endfor %}
 </ul>
