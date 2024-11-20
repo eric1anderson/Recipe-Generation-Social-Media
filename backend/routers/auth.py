@@ -24,6 +24,7 @@ async def login_post(request: Request, db: Session = Depends(get_db)):
     if user and bcrypt.checkpw(password, user.Password.encode('utf-8')):
         request.session.clear()
         request.session['user_id'] = user.UserID
+        request.session['role'] = user.Role
         # return RedirectResponse(url='/recipes', status_code=302)
         return Response(
             content=json.dumps({ "message": "Success" }),
