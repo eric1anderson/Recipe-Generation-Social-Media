@@ -37,7 +37,6 @@ class Recipe(Base):
     user = relationship('User', back_populates='recipes')
     ingredients = relationship('Ingredient', back_populates='recipe')
     social_media = relationship('SocialMedia', back_populates='recipe')
-    comments = relationship('Comment', back_populates='recipe')
     bookmarks = relationship('Bookmark', back_populates='recipe')
 
 class Ingredient(Base):
@@ -67,17 +66,18 @@ class SocialMedia(Base):
     Likes = Column(Integer, default=0)
 
     recipe = relationship('Recipe', back_populates='social_media')
+    comments = relationship('Comment', back_populates='social')
 
 class Comment(Base):
     __tablename__ = 'comments'
 
     CommentID = Column(String(36), primary_key=True, default=generate_uuid)
-    RecipeID = Column(String(36), ForeignKey('recipe.RecipeID'), nullable=False)
+    SMID = Column(String(36), ForeignKey('social_media.SMID'), nullable=False)
     UserID = Column(String(36), ForeignKey('users.UserID'), nullable=False)
     CommentText = Column(Text, nullable=False)
 
-    recipe = relationship('Recipe', back_populates='comments')
     user = relationship('User', back_populates='comments')
+    social = relationship('SocialMedia', back_populates='comments')
 
 class Bookmark(Base):
     __tablename__ = 'bookmark'
