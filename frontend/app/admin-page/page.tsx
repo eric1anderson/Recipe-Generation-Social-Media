@@ -4,18 +4,18 @@ import RecipeList from "../components/RecipeList";
 
 const AdminPage = () => {
     return (
-        <div className="bg-gray-900 min-h-screen text-white">
+        <div className="min-h-screen text-white">
             <Navbar />
             <main className="p-4">
                 {/* Upload Recipe Section */}
-                <div className="m-6 p-6 bg-gray-800 rounded-xl">
+                <div className="m-6 p-6 dark:bg-zinc-800 rounded-xl">
                     <h1 className="text-lg font-bold mb-4">Upload New Recipe</h1>
                     <form>
                         <label className="block w-full mb-2 text-sm" htmlFor="recipe-title">
                             Recipe Title
                         </label>
                         <input
-                            className="w-full mb-4 p-2 bg-gray-700 rounded-md text-white"
+                            className="block w-full px-4 py-2 mb-2 text-gray-200 placeholder-gray-500 bg-white border rounded-lg dark:bg-zinc-800 dark:border-zinc-600 dark:placeholder-zinc-400 focus:border-blue-400 dark:focus:border-blue-300 focus:ring-opacity-40 focus:outline-none focus:ring focus:ring-blue-300"
                             type="text"
                             id="recipe-title"
                             name="recipe-title"
@@ -25,7 +25,7 @@ const AdminPage = () => {
                             Recipe Description
                         </label>
                         <textarea
-                            className="w-full mb-4 p-2 bg-gray-700 rounded-md text-white h-24"
+                            className="block w-full px-4 py-2 mb-2 text-gray-200 placeholder-gray-500 bg-white border rounded-lg dark:bg-zinc-800 dark:border-zinc-600 dark:placeholder-zinc-400 focus:border-blue-400 dark:focus:border-blue-300 focus:ring-opacity-40 focus:outline-none focus:ring focus:ring-blue-300"
                             id="recipe-description"
                             name="recipe-description"
                         />
@@ -40,7 +40,7 @@ const AdminPage = () => {
                 </div>
 
                 {/* Manage Recipes Section */}
-                <div className="m-6 p-6 bg-gray-800 rounded-xl">
+                <div className="m-6 p-6 dark:bg-zinc-800 rounded-xl">
                     <h1 className="text-lg font-bold mb-4">Manage Existing Recipes</h1>
                     <RecipeList />
                     <RecipeList />

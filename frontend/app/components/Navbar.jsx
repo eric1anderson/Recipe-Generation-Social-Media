@@ -1,6 +1,6 @@
 const Navbar = () => {
     return (
-        <nav className="w-full flex flex-wrap bg-gray-800 justify-between sticky top-0 z-10">
+        <nav className="w-full flex flex-wrap dark:bg-zinc-800 justify-between sticky top-0 z-10">
             <div className="w-1/5 ml-6 my-4">
                 <h1 className="text-xl font-bold text-white">Recipe App</h1>
             </div>

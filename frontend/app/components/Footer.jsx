@@ -1,6 +1,6 @@
 const Footer = () => {
     return (
-        <div className="w-full bg-gray-800 flex justify-between items-start p-6">
+        <div className="w-full dark:bg-zinc-800 flex justify-between items-start p-6">
             {/* Left Section */}
             <div className="flex flex-col w-1/5 space-y-2">
                 <h3 className="text-base font-bold text-white">Explore</h3>
