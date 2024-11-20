@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Request, Depends
+import json
+from fastapi import APIRouter, Request, Depends, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -23,10 +24,24 @@ async def login_post(request: Request, db: Session = Depends(get_db)):
     if user and bcrypt.checkpw(password, user.Password.encode('utf-8')):
         request.session.clear()
         request.session['user_id'] = user.UserID
-        return RedirectResponse(url='/recipes', status_code=302)
+        # return RedirectResponse(url='/recipes', status_code=302)
+        return Response(
+            content=json.dumps({ "message": "Success" }),
+            status_code=200,
+            headers={
+                "Content-Type": "application/json"
+            }
+        )
     else:
-        error = 'Invalid email or password.'
-        return templates.TemplateResponse('login.html', {'request': request, 'error': error})
+        # error = 'Invalid email or password.'
+        # return templates.TemplateResponse('login.html', {'request': request, 'error': error})
+        return Response(
+            content=json.dumps({ "message": "Failed" }),
+            status_code=404,
+            headers={
+                "Content-Type": "application/json"
+            }
+        )
 
 @router.get('/logout')
 async def logout(request: Request):
