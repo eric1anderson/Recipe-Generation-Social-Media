@@ -12,7 +12,13 @@ templates = Jinja2Templates(directory="templates")
 @router.get('/recipes', response_class=HTMLResponse)
 def recipes(request: Request, db: Session = Depends(get_db)):
     if 'user_id' not in request.session:
-        return JSONResponse(content={"error": "Unauthorized"}, status_code=401)
+        return Response(
+            content=json.dumps({ "error": "Unauthorized"}),
+            status_code=401,
+            headers={
+                "Content-Type": "application/json"
+            }
+        )
     user = db.query(User).filter_by(UserID=request.session['user_id']).first()
     recipes = [{'RecipeID': recipe.RecipeID, 'RecipeName': recipe.RecipeName} for recipe in user.recipes]
     return Response(
@@ -146,7 +152,13 @@ async def view_shopping_list_post(request: Request, db: Session = Depends(get_db
 @router.get('/save_shopping_list')
 def save_shopping_list(request: Request, db: Session = Depends(get_db)):
     if 'user_id' not in request.session:
-        return JSONResponse(content={"error": "Unauthorized"}, status_code=401)
+        return Response(
+            content=json.dumps({ "error": "Unauthorized"}),
+            status_code=401,
+            headers={
+                "Content-Type": "application/json"
+            }
+        )
     shopping_list_items = db.query(ShoppingListItem).filter_by(UserID=request.session['user_id']).all()
     if not shopping_list_items:
         return Response(
@@ -164,7 +176,13 @@ def save_shopping_list(request: Request, db: Session = Depends(get_db)):
     #response = Response(content=shopping_list_text, media_type='text/plain')
     #response.headers['Content-Disposition'] = 'attachment; filename=shopping_list.txt'
     #return response
-    return JSONResponse(content={"shopping_list": shopping_list_text}, status_code=200)
+    return Response(
+            content=json.dumps({ "shopping_list": shopping_list_text}),
+            status_code=200,
+            headers={
+                "Content-Type": "application/json"
+            }
+        )
 
 @router.on_event("startup")
 def startup_event():
