@@ -1,5 +1,5 @@
 import json
-from fastapi import APIRouter, Request, Depends, Response
+from fastapi import APIRouter, Request, Depends, Response, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -23,10 +23,9 @@ def login_get(request: Request):
         )
 
 @router.post('/login')
-async def login_post(request: Request, db: Session = Depends(get_db)):
-    form = await request.form()
-    email = form.get('email')
-    password = form.get('password').encode('utf-8')
+def login_post(request: Request,  email: str = Form(...), password: str = Form(...),  db: Session = Depends(get_db)):
+
+    password = password.encode('utf-8')
     user = db.query(User).filter_by(Email=email).first()
     if user and bcrypt.checkpw(password, user.Password.encode('utf-8')):
         request.session.clear()
