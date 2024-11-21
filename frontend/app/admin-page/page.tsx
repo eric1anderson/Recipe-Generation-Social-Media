@@ -4,6 +4,7 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import RecipeList from "../components/RecipeList";
 import { useState } from "react";
+import { useRouter } from "next/router";
 
 const AdminPage = () => {
     const [recipeTitle, setRecipeTitle] = useState("")
@@ -13,6 +14,12 @@ const AdminPage = () => {
         { id: "2", title: "Chicken Curry" },
         { id: "3", title: "Vegetable Stir Fry" },
     ]);
+
+    const router = useRouter();
+
+    const handleEditRecipe = (id: string) => {
+        router.push(`/edit-recipe-page/${id}`); // Navigate to the edit page with the recipe ID
+    };
 
     const handleDeleteRecipe = async (id: string) => {
         try {
@@ -110,6 +117,7 @@ const AdminPage = () => {
                             key={recipe.id}
                             id={recipe.id}
                             title={recipe.title}
+                            onEdit={handleEditRecipe}
                             onDelete={handleDeleteRecipe} // Pass the delete handler
                         />
                     ))}
