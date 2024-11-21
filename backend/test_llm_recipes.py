@@ -18,8 +18,6 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 
 client = TestClient(app)
 
-def generate_uuid():
-    return str(uuid.uuid4())
 
 @pytest.fixture(scope="module")
 def setup_module():
@@ -27,7 +25,6 @@ def setup_module():
     db = TestingSessionLocal()
     hashed_password = bcrypt.hashpw('password123'.encode('utf-8'), bcrypt.gensalt())
     user = User(
-        UserID=generate_uuid(),
         Email=f'testuser@example.com',
         Password=hashed_password.decode('utf-8'),
         Role=True,
@@ -58,14 +55,8 @@ def test_generate_recipe(setup_module):
     # Generate a recipe
     response = client.post('/generate_recipe', data={'prompt': 'Create a recipe for a chocolate cake'})
     assert response.status_code == 201
-    assert response.json() == {"message": "Recipe generated and stored successfully."}
-
-    # Check if the recipe is stored in the database
-    db = next(override_get_db())
-    user = db.query(User).filter_by(Email='testuser@example.com').first()
-    assert len(user.recipes) > 0
-    assert user.recipes[0].RecipeContent is not None
-    db.close()
+    assert "title" in response.json()
+    assert "content" in response.json()
 
 def test_generate_recipe_without_prompt(setup_module):
     # Login as the test user
