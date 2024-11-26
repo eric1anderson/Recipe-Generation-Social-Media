@@ -26,6 +26,9 @@ export default function Login() {
       
       if (response.ok) {
         const data = await response.json();
+        // const session = response.headers.get("Set-Cookie");
+        console.log(response.headers);
+        console.log(data);
         // console.log("role: ", data.role)
         if(data.role) {
           router.push('/user-page');
