@@ -3,10 +3,10 @@ import uvicorn
 from starlette.middleware.sessions import SessionMiddleware
 from database import init_db
 from routers import shoppinglist, auth, recipes, social_media
-from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.cors import CORSMiddleware
 
 app = FastAPI()
-app.add_middleware(SessionMiddleware, secret_key='your_secret_key')  # Replace with a secure secret key
+app.add_middleware(SessionMiddleware, secret_key='your_secret_key', same_site="None", https_only=True)  # Replace with a secure secret key
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],
