@@ -2,7 +2,7 @@ from fastapi import FastAPI
 import uvicorn
 from starlette.middleware.sessions import SessionMiddleware
 from database import init_db
-from routers import shoppinglist, auth, llm_recipes, social_media
+from routers import shoppinglist, auth, recipes, social_media
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -19,7 +19,7 @@ init_db()
 
 app.include_router(shoppinglist.router)
 app.include_router(auth.router)
-app.include_router(llm_recipes.router)
+app.include_router(recipes.router)
 app.include_router(social_media.router)
 
 @app.get("/")
