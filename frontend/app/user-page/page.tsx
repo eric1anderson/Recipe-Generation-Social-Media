@@ -2,16 +2,10 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import CommentList from "../components/CommentList";
 import ProtectedRoute from "../components/ProtectedRoute";
-import { cookies } from "next/headers";
 
-const UserPage = () => {
-    const cookieStore = cookies();
-    const sessionCookie = cookieStore.get("session");
-
-    console.log(sessionCookie);
-    
+const UserPage = () => {    
     return (
-        // <ProtectedRoute allowedRoles={[1]}>
+        <ProtectedRoute allowedRoles={[true]}>
             <div className="min-h-screen flex flex-col">
                 <Navbar />
                 <main className="flex-grow p-6">
@@ -67,7 +61,7 @@ const UserPage = () => {
                 </main>
                 <Footer />
             </div>
-        // </ProtectedRoute>
+        </ProtectedRoute>
     );
 };
 

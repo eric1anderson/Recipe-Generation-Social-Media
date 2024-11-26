@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function Login() {
@@ -8,6 +8,38 @@ export default function Login() {
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+
+  // redirect if token still in local storage
+  useEffect(() => {
+    const checkAuthentication = async () => {
+      const token = localStorage.getItem("access_token");
+
+      if (!token) return;
+
+      try {
+        const response = await fetch("http://127.0.0.1:5000/auth/verify", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+
+          if (data.role === true) {
+            router.push("/user-page");
+          } else if (data.role === false) {
+            router.push("/admin-page");
+          }
+        }
+      } catch (err) {
+        console.log("Token invalid or verification failed:", err);
+      }
+    };
+
+    checkAuthentication();
+  }, [router]);
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
@@ -19,17 +51,16 @@ export default function Login() {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
         body: new URLSearchParams({ email, password }).toString(),
-        credentials: 'include',
       });
 
       console.log("here response", response)
       
       if (response.ok) {
         const data = await response.json();
-        // const session = response.headers.get("Set-Cookie");
-        console.log(response.headers);
         console.log(data);
-        // console.log("role: ", data.role)
+
+        localStorage.setItem("access_token", data.access_token);
+
         if(data.role) {
           router.push('/user-page');
         } else {

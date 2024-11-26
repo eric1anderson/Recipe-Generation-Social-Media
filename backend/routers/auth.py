@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Depends, HTTPException, status, Form, Response
+from fastapi import APIRouter, Request, Response, Depends, HTTPException, status, Form
 from sqlalchemy.orm import Session
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
@@ -51,13 +51,6 @@ def login(email: str = Form(...), password: str = Form(...), db: Session = Depen
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-@router.post('/logout')
-def logout(response: Response):
-    # Delete the access_token cookie
-    response.delete_cookie(key="access_token")
-    return {"message": "Logged out successfully"}
-
-
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -75,3 +68,14 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     if user is None:
         raise credentials_exception
     return user
+
+@router.get('/auth/verify')
+def verify_token(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    user = get_current_user(token, db)
+    # print(user.Email)
+    
+    return {
+        "user_id": user.UserID,
+        "role": user.Role,
+        "email": user.Email,
+    }
