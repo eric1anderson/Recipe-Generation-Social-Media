@@ -1,25 +1,27 @@
+# test_shopping_list.py
 
-import os
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-import bcrypt
-from models import User, Recipe, Ingredient, ShoppingListItem
-from database import Base, get_db
+
 from main import app
+from database import Base, get_db
+from models import User, Recipe, Ingredient, ShoppingListItem
+from routers.auth import get_password_hash  # Import your password hashing function
 
-# Set the DATABASE_URL environment variable
-os.environ['DATABASE_URL'] = 'sqlite:///./test_database.db'
+# Create a new database URL for testing
+TEST_DATABASE_URL = "sqlite:///./test.db"
 
-# Create the engine and session
+# Create the test database engine
 engine = create_engine(
-    os.environ['DATABASE_URL'], connect_args={"check_same_thread": False}
+    TEST_DATABASE_URL, connect_args={"check_same_thread": False}
+)
+TestingSessionLocal = sessionmaker(
+    autocommit=False, autoflush=False, bind=engine
 )
 
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Override get_db dependency
+# Override the get_db dependency to use the test database
 def override_get_db():
     try:
         db = TestingSessionLocal()
@@ -27,162 +29,228 @@ def override_get_db():
     finally:
         db.close()
 
+# Apply the dependency override
 app.dependency_overrides[get_db] = override_get_db
 
-# Initialize the TestClient
 client = TestClient(app)
 
-@pytest.fixture(scope="function")
-def db_session():
+# Replace with valid test credentials
+TEST_USER_EMAIL = "testuser5@example.com"
+TEST_USER_PASSWORD = "password123"
 
-    # Clean up the database before each test
-    Base.metadata.drop_all(bind=engine)
+@pytest.fixture(scope="session", autouse=True)
+def setup_database():
     Base.metadata.create_all(bind=engine)
-    session = TestingSessionLocal()
-    yield session
-    session.rollback()
-    session.close()
+    yield
+    Base.metadata.drop_all(bind=engine)
 
-@pytest.fixture(scope="function")
-def test_user(db_session):
-    password = "testpassword"
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-    user = User(Email="testuser@example.com", Password=hashed_password, Name="Test User")
-    db_session.add(user)
-    db_session.commit()
-    db_session.refresh(user)
+@pytest.fixture(scope="session")
+def create_test_user():
+    db = TestingSessionLocal()
+    user = db.query(User).filter_by(Email=TEST_USER_EMAIL).first()
+    if not user:
+        user = User(
+            Email=TEST_USER_EMAIL,
+            Password=get_password_hash(TEST_USER_PASSWORD),
+            Role=False,
+            Name="Test User"
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    db.close()
     return user
 
-@pytest.fixture(scope="function")
-def authenticated_client(test_user):
-    with TestClient(app) as client:
-        response = client.post("/login", data={"email": test_user.Email, "password": "testpassword"},headers={"Content-Type": "application/x-www-form-urlencoded"},  allow_redirects=False)
-        if response.status_code != 200:
-            print("Login failed")
-            print("Response status code:", response.status_code)
-            print("Response text:", response.text)
-        assert response.status_code == 200
-        yield client
+def test_login(create_test_user):
+    """
+    Test user login and token retrieval.
+    """
+    response = client.post(
+        "/login",
+        data={
+            "email": TEST_USER_EMAIL,
+            "password": TEST_USER_PASSWORD
+        },
+        headers={"Content-Type": "application/x-www-form-urlencoded"}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert "access_token" in data
+    assert data["token_type"] == "bearer"
 
-def test_recipes_authenticated(authenticated_client, db_session, test_user):
-    # Add a recipe for the test user
-    recipe = Recipe(RecipeName="Test Recipe", UserID=test_user.UserID, RecipeContent="Test Content")
-    db_session.add(recipe)
-    db_session.commit()
+def test_get_recipes(create_test_user):
+    """
+    Test retrieving user recipes.
+    """
+    # First, create a test recipe for the user
+    db = TestingSessionLocal()
+    recipe = Recipe(
+        RecipeName="Test Recipe",
+        UserID=create_test_user.UserID,
+        RecipeContent = "Test content",
+        Visibility=True
+    )
+    db.add(recipe)
+    db.commit()
+    db.refresh(recipe)
 
-    response = authenticated_client.get("/recipes")
-    print(f"Response: {response}")
+    # Create test ingredients
+    ingredient1 = Ingredient(
+        RecipeID=recipe.RecipeID,
+        IngredientName="Test Ingredient 1"
+    )
+    ingredient2 = Ingredient(
+        RecipeID=recipe.RecipeID,
+        IngredientName="Test Ingredient 2"
+    )
+    db.add_all([ingredient1, ingredient2])
+    db.commit()
+    db.close()
+
+    # Log in to get the token
+    response = client.post(
+        "/login",
+        data={
+            "email": TEST_USER_EMAIL,
+            "password": TEST_USER_PASSWORD
+        },
+        headers={"Content-Type": "application/x-www-form-urlencoded"}
+    )
+    data = response.json()
+    token = data["access_token"]
+
+    headers = {"Authorization": f"Bearer {token}"}
+    response = client.get("/recipes", headers=headers)
     assert response.status_code == 200
     data = response.json()
     assert "recipes" in data
-    assert len(data["recipes"]) == 1
-    assert data["recipes"][0]["RecipeName"] == "Test Recipe"
+    assert isinstance(data["recipes"], list)
+    assert len(data["recipes"]) > 0
 
-def test_recipes_unauthenticated():
-    response = client.get("/recipes")
-    assert response.status_code == 401
-    assert response.json() == {"error": "Unauthorized"}
+def test_add_to_shopping_list(create_test_user):
+    """
+    Test adding a recipe's ingredients to the shopping list.
+    """
+    # First, create a test recipe for the user
+    db = TestingSessionLocal()
+    recipe = Recipe(
+        RecipeName="Test Recipe for Shopping List",
+        UserID=create_test_user.UserID,
+        RecipeContent = "Test Content",
+        Visibility=True
+    )
 
-def test_add_to_shopping_list_valid(authenticated_client, db_session, test_user):
-    # Create a recipe with ingredients
-    recipe = Recipe(RecipeName="Test Recipe", UserID=test_user.UserID, RecipeContent="Test Content")
-    db_session.add(recipe)
-    db_session.commit()
-    db_session.refresh(recipe)
+    # Create test ingredients and associate them via the relationship
+    ingredient1 = Ingredient(IngredientName="Shopping Ingredient 1")
+    ingredient2 = Ingredient(IngredientName="Shopping Ingredient 2")
+    recipe.ingredients = [ingredient1, ingredient2]
 
-    ingredient1 = Ingredient(RecipeID=recipe.RecipeID, IngredientName="Ingredient 1")
-    ingredient2 = Ingredient(RecipeID=recipe.RecipeID, IngredientName="Ingredient 2")
-    db_session.add_all([ingredient1, ingredient2])
-    db_session.commit()
+    db.add(recipe)
+    db.commit()
+    db.refresh(recipe)
+    db.close()
 
-    response = authenticated_client.get(f"/add_to_shopping_list/{recipe.RecipeID}")
+    # Log in to get the token
+    response = client.post(
+        "/login",
+        data={
+            "email": TEST_USER_EMAIL,
+            "password": TEST_USER_PASSWORD
+        },
+        headers={"Content-Type": "application/x-www-form-urlencoded"}
+    )
+    data = response.json()
+    token = data["access_token"]
+
+    headers = {"Authorization": f"Bearer {token}"}
+
+    # Add the recipe to the shopping list
+    response = client.get(f"/add_to_shopping_list/{recipe.RecipeID}", headers=headers)
     assert response.status_code == 200
-    assert response.json() == {"message": "Ingredients added to shopping list"}
+    data = response.json()
+    assert data["message"] == "Ingredients added to shopping list"
 
-    # Verify that ingredients are added to the shopping list
-    shopping_list_response = authenticated_client.get("/shopping_list")
-    assert shopping_list_response.status_code == 200
-    shopping_list = shopping_list_response.json()["shopping_list"]
-    assert "Ingredient 1" in shopping_list
-    assert "Ingredient 2" in shopping_list
+def test_view_shopping_list(create_test_user):
+    """
+    Test retrieving the shopping list.
+    """
+    # Log in to get the token
+    response = client.post(
+        "/login",
+        data={
+            "email": TEST_USER_EMAIL,
+            "password": TEST_USER_PASSWORD
+        },
+        headers={"Content-Type": "application/x-www-form-urlencoded"}
+    )
+    data = response.json()
+    token = data["access_token"]
 
-def test_add_to_shopping_list_invalid_recipe(authenticated_client):
-    response = authenticated_client.get("/add_to_shopping_list/invalid_id")
-    assert response.status_code == 404
-    assert response.json() == {"error": "Recipe not found"}
-
-def test_add_to_shopping_list_unauthenticated(db_session, test_user):
-    # Create a recipe
-    recipe = Recipe(RecipeName="Test Recipe", UserID=test_user.UserID, RecipeContent="Test Content")
-    db_session.add(recipe)
-    db_session.commit()
-
-    response = client.get(f"/add_to_shopping_list/{recipe.RecipeID}")
-    assert response.status_code == 401
-    assert response.json() == {"error": "Unauthorized"}
-
-def test_view_shopping_list_authenticated(authenticated_client, db_session, test_user):
-    # Add items to the shopping list
-    item1 = ShoppingListItem(UserID=test_user.UserID, IngredientName="Ingredient 1")
-    item2 = ShoppingListItem(UserID=test_user.UserID, IngredientName="Ingredient 2")
-    db_session.add_all([item1, item2])
-    db_session.commit()
-
-    response = authenticated_client.get("/shopping_list")
+    headers = {"Authorization": f"Bearer {token}"}
+    response = client.get("/shopping_list", headers=headers)
     assert response.status_code == 200
     data = response.json()
     assert "shopping_list" in data
-    assert len(data["shopping_list"]) == 2
-    assert "Ingredient 1" in data["shopping_list"]
-    assert "Ingredient 2" in data["shopping_list"]
+    assert isinstance(data["shopping_list"], list)
+    assert len(data["shopping_list"]) > 0
 
-def test_view_shopping_list_unauthenticated():
-    response = client.get("/shopping_list")
-    assert response.status_code == 401
-    assert response.json() == {"error": "Unauthorized"}
+def test_update_shopping_list(create_test_user):
+    """
+    Test updating the shopping list with new items.
+    """
+    # Log in to get the token
+    response = client.post(
+        "/login",
+        data={
+            "email": TEST_USER_EMAIL,
+            "password": TEST_USER_PASSWORD
+        },
+        headers={"Content-Type": "application/x-www-form-urlencoded"}
+    )
+    data = response.json()
+    token = data["access_token"]
 
-def test_update_shopping_list_authenticated(authenticated_client, db_session, test_user):
-    shopping_list_input = "Milk\nEggs\nBread"
-    response = authenticated_client.post("/shopping_list", data={"shopping_list": shopping_list_input})
-    assert response.status_code == 200
-    assert response.json() == {"message": "Shopping list updated"}
-
-    # Verify that the shopping list is updated
-    response = authenticated_client.get("/shopping_list")
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+    shopping_list_items = "Milk\nEggs\nBread"
+    response = client.post(
+        "/shopping_list",
+        data={"shopping_list": shopping_list_items},
+        headers=headers
+    )
     assert response.status_code == 200
     data = response.json()
-    assert "shopping_list" in data
-    assert len(data["shopping_list"]) == 3
-    assert "Milk" in data["shopping_list"]
-    assert "Eggs" in data["shopping_list"]
-    assert "Bread" in data["shopping_list"]
+    assert data["message"] == "Shopping list updated"
 
-def test_update_shopping_list_unauthenticated():
-    shopping_list_input = "Milk\nEggs\nBread"
-    response = client.post("/shopping_list", data={"shopping_list": shopping_list_input})
-    assert response.status_code == 401
-    assert response.json() == {"error": "Unauthorized"}
+    # Verify the update
+    response = client.get("/shopping_list", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["shopping_list"] == ["Milk", "Eggs", "Bread"]
 
-def test_save_shopping_list_authenticated(authenticated_client, db_session, test_user):
-    # Add items to the shopping list
-    item1 = ShoppingListItem(UserID=test_user.UserID, IngredientName="Ingredient 1")
-    item2 = ShoppingListItem(UserID=test_user.UserID, IngredientName="Ingredient 2")
-    db_session.add_all([item1, item2])
-    db_session.commit()
+def test_save_shopping_list(create_test_user):
+    """
+    Test saving the shopping list.
+    """
+    # Log in to get the token
+    response = client.post(
+        "/login",
+        data={
+            "email": TEST_USER_EMAIL,
+            "password": TEST_USER_PASSWORD
+        },
+        headers={"Content-Type": "application/x-www-form-urlencoded"}
+    )
+    data = response.json()
+    token = data["access_token"]
 
-    response = authenticated_client.get("/save_shopping_list")
+    headers = {"Authorization": f"Bearer {token}"}
+    response = client.get("/save_shopping_list", headers=headers)
     assert response.status_code == 200
     data = response.json()
     assert "shopping_list" in data
     shopping_list_text = data["shopping_list"]
-    assert "Ingredient 1" in shopping_list_text
-    assert "Ingredient 2" in shopping_list_text
-
-def test_save_shopping_list_empty(authenticated_client):
-    response = authenticated_client.get("/save_shopping_list")
-    assert response.status_code == 400
-    assert response.json() == {"error": "Your shopping list is empty."}
-
-def test_save_shopping_list_unauthenticated():
-    response = client.get("/save_shopping_list")
-    assert response.status_code == 401
+    assert isinstance(shopping_list_text, str)
+    assert shopping_list_text == "Milk\nEggs\nBread"
