@@ -6,7 +6,7 @@ from routers import shoppinglist, auth, recipes, social_media
 from starlette.middleware.cors import CORSMiddleware
 
 app = FastAPI()
-app.add_middleware(SessionMiddleware, secret_key='your_secret_key', same_site="None", https_only=True)  # Replace with a secure secret key
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000"],

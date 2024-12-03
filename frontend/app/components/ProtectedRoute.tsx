@@ -1,31 +1,45 @@
 "use client";
 
-import { useAuth } from "../hooks/useAuth";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ReactNode, useEffect } from "react";
 
-interface ProtectedRouteProps {
-  children: ReactNode;
-  allowedRoles: (0 | 1)[];
-}
-
-const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
-  const { authenticated, role } = useAuth();
+export default function ProtectedRoute({ allowedRoles, children }: { allowedRoles: boolean[], children: React.ReactNode }) {
   const router = useRouter();
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (!authenticated) {
-      router.push("/");
-    } else if (role !== null && !allowedRoles.includes(role)) {
-      router.push(role === 0 ? "/admin-page" : "/user-page");
-    }
-  }, [authenticated, role, router, allowedRoles]);
+    const validateUser = async () => {
+      try {
+        const response = await fetch("http://127.0.0.1:5000/auth/verify", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          },
+        });
 
-  if (!authenticated || role === null) {
-    return <p>Loading...</p>;
+        if (!response.ok) {
+          throw new Error("Unauthorized");
+        }
+
+        const data = await response.json();
+
+        if (!allowedRoles.includes(data.role)) {
+          throw new Error("Forbidden");
+        }
+
+        setIsAuthorized(true);
+      } catch (err) {
+        setIsAuthorized(false);
+        router.push("/");
+      }
+    };
+
+    validateUser();
+  }, [allowedRoles, router]);
+
+  if (isAuthorized === null) {
+    return <p>Loading...</p>; // Show a loading state while verifying
   }
 
-  return <>{children}</>;
-};
-
-export default ProtectedRoute;
+  return isAuthorized ? <>{children}</> : null;
+}
