@@ -3,7 +3,7 @@ import uvicorn
 from starlette.middleware.sessions import SessionMiddleware
 from database import init_db
 from routers import shoppinglist, auth, recipes, social_media
-from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
