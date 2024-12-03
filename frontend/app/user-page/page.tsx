@@ -5,7 +5,7 @@ import ProtectedRoute from "../components/ProtectedRoute";
 
 const UserPage = () => {
     return (
-        <ProtectedRoute allowedRoles={[true]}>
+        // <ProtectedRoute allowedRoles={[true]}>
             <div className="min-h-screen flex flex-col bg-black">
                 <Navbar />
                 <main className="flex-grow p-6">
@@ -31,7 +31,7 @@ const UserPage = () => {
                 </main>
                 <Footer />
             </div>
-        </ProtectedRoute>
+        // </ProtectedRoute>
     );
 };
 
