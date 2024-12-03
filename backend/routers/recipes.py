@@ -27,13 +27,16 @@ class RecipeOutput(BaseModel):
     class Config:
         orm_mode = True
 
-@router.post('/generate_recipe')
+@router.post('/generate-recipe')
 async def generate_recipe(request: Request, db: Session = Depends(get_db)):
-    if 'user_id' not in request.session:
-        return JSONResponse(status_code=401, content={"message": "Unauthorized"})
-    
-    form = await request.form()
-    prompt = form.get('prompt')
+    req_body = await request.json()
+    question = req_body['question']
+    ingredients = req_body['ingredients']
+    dietary_restrictions = req_body['dietary_restrictions']
+    print(question)
+    print(ingredients)
+
+    prompt = "Aparajith write a custom system prompt and use the variables, question, ingredients and dietary_restrictions, or if you don't want question we can skip that."
     if not prompt:
         raise HTTPException(status_code=400, detail="Prompt is required.")
 
