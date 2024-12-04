@@ -94,6 +94,7 @@ export default function Login() {
       if (response.ok) {
         const data = await response.json();
 
+        localStorage.setItem("username", data.username)
         localStorage.setItem("access_token", data.access_token);
 
         if (data.role) {
