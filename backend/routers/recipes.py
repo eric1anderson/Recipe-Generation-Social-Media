@@ -142,14 +142,14 @@ def delete_recipe(
     current_user: User = Depends(get_current_user)
 ):
     if not current_user.Role:
-        db_recipe = db.query(Recipe).filter_by(RecipeID=recipe_id).first()
+        db_recipe = db.query(Recipe).filter_by(RecipeID=recipe_id)
     else:
-        db_recipe = db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID).first()
+        db_recipe = db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID)
     
     if not db_recipe:
-        raise HTTPException(status_code=404, detail="Recipe not found")
-    db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID).delete()
-    db.query(Ingredient).filter_by(RecipeID=db_recipe.RecipeID).delete()
+        raise HTTPException(status_code=404, detail="Recipe not found")    
+    db.query(Ingredient).filter_by(RecipeID=db_recipe.first().RecipeID).delete()
+    db_recipe.delete()
     db.commit()
     return JSONResponse(status_code=200, content={"message": "Recipe deleted successfully"})
 
