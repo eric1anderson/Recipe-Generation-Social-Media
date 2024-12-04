@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
+import ReactMarkdown from "react-markdown";
 
 export default function GenerateRecipe() {
   const [question, setQuestion] = useState<string>("");
@@ -16,6 +17,7 @@ export default function GenerateRecipe() {
     title: string;
     content: string;
     ingredients: string[];
+    userGenerated: boolean;
   } | null>(null);
 
   const router = useRouter();
@@ -55,10 +57,12 @@ export default function GenerateRecipe() {
   
       if (response.ok) {
         const data = await response.json();
+        console.log(data);
         setRecipeResponse({
           title: data.title,
           content: data.content,
           ingredients: data.ingredients,
+          userGenerated: data.userGenerated,
         });
       } else {
         const errorData = await response.json();
@@ -70,24 +74,45 @@ export default function GenerateRecipe() {
     }
   };
 
+  const handleApprove = async () => {
+    await handleSaveRecipe();
+  };
+  
+  const handleReject = () => {
+    router.push("/user-page");
+  };
 
   const handleSaveRecipe = async () => {
     try {
+      console.log(recipeResponse);
       const response = await fetch("http://127.0.0.1:5000/recipes", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         },
-        body: JSON.stringify({ recipe: recipeResponse }),
+        body: JSON.stringify(recipeResponse),
       });
 
       if (response.ok) {
         alert("Recipe saved successfully!");
+        const data = await response.json();
+        const response_social_media = await fetch(`http://127.0.0.1:5000/add_post`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({recipe_id: data.id}),
+        });
         router.push("/user-page");
       } else {
         const errorData = await response.json();
         alert(errorData.detail || "Failed to save recipe.");
       }
+      
+
+
     } catch (error) {
       console.error("Error saving recipe:", error);
       alert("Something went wrong. Please try again.");
@@ -191,15 +216,29 @@ export default function GenerateRecipe() {
               Generate Recipe
             </button>
             {recipeResponse && (
-              <div className="recipe-response mt-4 p-4 bg-gray-100 rounded shadow">
+              <div className="recipe-response dark:bg-zinc-700 mt-4 p-4 bg-gray-100 rounded shadow">
                 <h2 className="text-xl font-bold">{recipeResponse.title}</h2>
-                <p className="mt-2">{recipeResponse.content}</p>
+                <ReactMarkdown className="mt-2">{recipeResponse.content}</ReactMarkdown>
                 <h3 className="mt-4 font-semibold">Ingredients:</h3>
                 <ul className="list-disc list-inside">
-                  {recipeResponse.ingredients.map((ingredient, index) => (
+                  {Array.isArray(recipeResponse.ingredients) && recipeResponse.ingredients.map((ingredient, index) => (
                     <li key={index}>{ingredient}</li>
                   ))}
                 </ul>
+                <div className="mt-4 flex gap-4">
+                  <button
+                    onClick={handleApprove}
+                    className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={handleReject}
+                    className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                  >
+                    Reject
+                  </button>
+                </div>
               </div>
             )}
           </div>
