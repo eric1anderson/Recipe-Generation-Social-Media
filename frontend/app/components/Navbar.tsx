@@ -9,15 +9,20 @@ const Navbar = () => {
         const storedUserName = localStorage.getItem("username");
         return storedUserName || ""; // Initialize state only once
     });
+    const [dropdownOpen, setDropdownOpen] = useState(false);
 
     const handleLogout = async () => {
         try {
             localStorage.removeItem("access_token");
-            localStorage.removeItem("user_name");
+            localStorage.removeItem("username");
             router.push("/");
         } catch (error) {
             console.error("Logout failed:", error);
         }
+    };
+
+    const toggleDropdown = () => {
+        setDropdownOpen((prev) => !prev);
     };
 
     return (
@@ -32,14 +37,16 @@ const Navbar = () => {
                     <li className="mx-4 text-white hover:text-gray-300 cursor-pointer"><a href="http://localhost:3000/upload-recipe-page">Upload Recipe</a></li>
                     <li className="mx-4 text-white hover:text-gray-300 cursor-pointer"><a href="http://localhost:3000/recipe-page">Recipes</a></li>
                     <li className="mx-4 text-white hover:text-gray-300 cursor-pointer"><a href="http://localhost:3000/shoppinglist-page">Shopping List</a></li>
-                    <li 
-                        className="mx-4 text-white hover:text-gray-300 cursor-pointer"
-                        onClick={handleLogout}
-                    >
-                        Logout
-                    </li>
-                    <li className="mx-4 text-white">
-                        <a href="http://localhost:3000/user-profile">Welcome, {userName || "Guest"}</a>
+                    <li className="relative mx-4 text-white">
+                        <button onClick={toggleDropdown} className="hover:text-gray-300 cursor-pointer">Hi, {userName || "Guest"}</button>
+                        {dropdownOpen && (
+                            <div className="absolute right-0 mt-2 w-48 dark:bg-zinc-800 rounded shadow-lg">
+                                <ul className="py-2">
+                                    <li className="px-4 py-2 hover:text-gray-300 cursor-pointer" onClick={() => router.push("/user-profile")}>Profile</li>
+                                    <li className="px-4 py-2 hover:text-gray-300 cursor-pointer" onClick={handleLogout}>Logout</li>
+                                </ul>
+                            </div>
+                        )}
                     </li>
                 </ul>
             </div>
