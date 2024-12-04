@@ -25,7 +25,8 @@ const Navbar = () => {
             <div className="flex items-center ml-auto mr-6">
                 <ul className="flex list-none m-0 p-0">
                     <li className="mx-4 text-white hover:text-gray-300 cursor-pointer"><a href="http://localhost:3000/upload-recipe-page">Upload Recipe</a></li>
-                    <li className="mx-4 text-white hover:text-gray-300 cursor-pointer"><a>Recipes</a></li>
+                    <li className="mx-4 text-white hover:text-gray-300 cursor-pointer"><a href="http://localhost:3000/recipe-page">Recipes</a></li>
+                    <li className="mx-4 text-white hover:text-gray-300 cursor-pointer"><a href="http://localhost:3000/shoppinglist-page">Shopping List</a></li>
                     <li 
                         className="mx-4 text-white hover:text-gray-300 cursor-pointer"
                         onClick={handleLogout}

@@ -10,7 +10,7 @@ export default function UserPage() {
     const router = useRouter();
 
     return (
-        // <ProtectedRoute allowedRoles={[true]}>
+        <ProtectedRoute allowedRoles={[true]}>
             <div className="min-h-screen flex flex-col bg-black">
                 <Navbar />
                     <main className="flex-grow p-6">
@@ -35,6 +35,6 @@ export default function UserPage() {
                     </main>
                 <Footer />
             </div>
-        // </ProtectedRoute>
+        </ProtectedRoute>
     );
 };
