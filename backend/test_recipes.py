@@ -92,7 +92,7 @@ def test_create_recipe(create_test_user):
     token = data["access_token"]
 
     headers = {"Authorization": f"Bearer {token}"}
-    response = client.post("/recipes", json={"title": "Test Recipe", "content": "Test Content"}, headers=headers)
+    response = client.post("/recipes", json={"title": "Test Recipe", "content": "Test Content", "ingredients": ["one", "two"]}, headers=headers)
     assert response.status_code == 201
     data = response.json()
     assert data["message"] == "Recipe created successfully."
