@@ -1,4 +1,6 @@
-const CommentList = () => {
+import {Comment } from "../types";
+
+const CommentList = ({comment}: {comment: Comment} ) => {
     return (
         <div className="flex items-start gap-4">
             <img
@@ -7,9 +9,9 @@ const CommentList = () => {
                 className="w-12 h-12 rounded-full"
             />
             <div>
-                <h3 className="font-bold">John Doe</h3>
+                <h3 className="font-bold">{comment.UserName}</h3>
                 <p>
-                    This recipe looks amazing! Can't wait to try it out.
+                    {comment.CommentText}
                 </p>
             </div>
         </div>
