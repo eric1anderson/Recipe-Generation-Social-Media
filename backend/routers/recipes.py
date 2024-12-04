@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from database import get_db
-from models import User, Recipe
+from models import User, Recipe, Ingredient
 import openai
 import json
 from pydantic import BaseModel
@@ -19,7 +19,8 @@ class RecipeBase(BaseModel):
     content: str
 
 class RecipeLLM(RecipeBase):
-    ingredients: str
+    ingredients: List[str]
+    userGenerated: bool
     
 class RecipeOutput(BaseModel):
     RecipeID: str
@@ -68,7 +69,7 @@ async def generate_recipe(
 
 @router.post('/recipes')
 def create_recipe(
-    recipe: RecipeBase,
+    recipe: RecipeLLM,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -76,11 +77,21 @@ def create_recipe(
         UserID=current_user.UserID,
         RecipeName=recipe.title,
         RecipeContent=recipe.content,
-        Visibility=True
+        UserGenerated=recipe.userGenerated,
     )
     db.add(new_recipe)
     db.commit()
-    return JSONResponse(status_code=201, content={"message": "Recipe created successfully."})
+    db.refresh(new_recipe)  # Refresh to get the RecipeID
+    print("new_recipe", new_recipe.RecipeID)
+    # add ingredients to the database
+    for ingredient in recipe.ingredients:
+        new_ingredient = Ingredient(
+            RecipeID=new_recipe.RecipeID,
+            IngredientName=ingredient
+        )
+        db.add(new_ingredient)
+    db.commit()
+    return JSONResponse(status_code=201, content={"message": "Recipe created successfully.", "id": new_recipe.RecipeID})
 
 
 @router.get('/recipes/{recipe_id}', response_model=RecipeOutput)
