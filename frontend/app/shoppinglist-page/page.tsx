@@ -2,25 +2,33 @@
 
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import DialogBox from "../components/DialogBox"; // Import the DialogBox component
 import { useState, useEffect } from "react";
 
 const ShoppingListPage = () => {
-  const [ingredients, setIngredients] = useState<string[]>([]); // Ingredients as array
-  const [newIngredients, setNewIngredients] = useState<string[]>([]); // Newly added ingredients
-  const [currentIngredient, setCurrentIngredient] = useState<string>(""); // Current input for chips
-  const [saving, setSaving] = useState(false); // Saving state for updating
+  const [ingredients, setIngredients] = useState<string[]>([]);
+  const [newIngredients, setNewIngredients] = useState<string[]>([]);
+  const [currentIngredient, setCurrentIngredient] = useState<string>("");
+  const [saving, setSaving] = useState(false);
+  const [dialog, setDialog] = useState({ isOpen: false, title: "", message: "" });
 
-  // Function to retrieve the session token from local storage
+  const showDialog = (title: string, message: string) => {
+    setDialog({ isOpen: true, title, message });
+  };
+
+  const closeDialog = () => {
+    setDialog({ isOpen: false, title: "", message: "" });
+  };
+
   const getSessionToken = (): string | null => {
     const token = localStorage.getItem("access_token");
     if (!token) {
-      alert("Session token is missing. Redirecting to login.");
-      window.location.href = "/";
+      showDialog("Session Error", "Session token is missing. Redirecting to login.");
+      setTimeout(() => (window.location.href = "/"), 2000); // Redirect after 2 seconds
     }
     return token;
   };
 
-  // Fetch ingredients from the backend
   const fetchIngredients = async () => {
     try {
       const sessionToken = getSessionToken();
@@ -35,16 +43,15 @@ const ShoppingListPage = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setIngredients(data.shopping_list || []); // Ensure data is an array
+        setIngredients(data.shopping_list || []);
       } else {
-        alert("Failed to fetch ingredients. Please try again.");
+        showDialog("Fetch Error", "Failed to fetch ingredients. Please try again.");
       }
     } catch (error) {
       console.error("Error fetching ingredients:", error);
     }
   };
 
-  // Update only newly created chips on the backend
   const updateIngredients = async () => {
     setSaving(true);
     try {
@@ -59,14 +66,14 @@ const ShoppingListPage = () => {
           Authorization: `Bearer ${sessionToken}`,
           "Content-Type": "application/x-www-form-urlencoded",
         },
-        body: new URLSearchParams({ shopping_list: serializedIngredients }), // Send as a serialized string
+        body: new URLSearchParams({ shopping_list: serializedIngredients }),
       });
 
       if (response.ok) {
-        alert("Shopping list updated successfully!");
-        setNewIngredients([]); // Clear the new ingredients
+        showDialog("Success", "Shopping list updated successfully!");
+        setNewIngredients([]);
       } else {
-        alert("Failed to update the shopping list. Please try again.");
+        showDialog("Update Error", "Failed to update the shopping list. Please try again.");
       }
     } catch (error) {
       console.error("Error updating ingredients:", error);
@@ -75,7 +82,6 @@ const ShoppingListPage = () => {
     }
   };
 
-  // Add a new chip
   const handleAddChip = () => {
     if (currentIngredient.trim() && !ingredients.includes(currentIngredient.trim())) {
       setIngredients((prev) => [...prev, currentIngredient.trim()]);
@@ -84,14 +90,12 @@ const ShoppingListPage = () => {
     }
   };
 
-  // Remove a chip
   const handleRemoveChip = (index: number) => {
     const ingredientToRemove = ingredients[index];
     setIngredients((prev) => prev.filter((_, i) => i !== index));
-    setNewIngredients((prev) => prev.filter((item) => item !== ingredientToRemove)); // Remove from new ingredients if it exists
+    setNewIngredients((prev) => prev.filter((item) => item !== ingredientToRemove));
   };
 
-  // Fetch ingredients when component mounts
   useEffect(() => {
     getSessionToken();
     fetchIngredients();
@@ -148,6 +152,12 @@ const ShoppingListPage = () => {
         </div>
       </main>
       <Footer />
+      <DialogBox
+        isOpen={dialog.isOpen}
+        title={dialog.title}
+        message={dialog.message}
+        onClose={closeDialog}
+      />
     </div>
   );
 };
