@@ -26,14 +26,6 @@ def recipes(db: Session = Depends(get_db), current_user: User = Depends(get_curr
                 "Content-Type": "application/json"
             }
         )
-    # return templates.TemplateResponse(
-    #     'recipes.html',
-    #     {
-    #         'request': request,
-    #         'recipes': user.recipes,
-    #         'user_id': request.session.get('user_id')
-    #     }
-    # )
 
 @router.get('/add_to_shopping_list/{recipe_id}')
 def add_to_shopping_list(
