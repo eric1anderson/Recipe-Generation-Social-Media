@@ -100,13 +100,19 @@ def read_recipes(
     recipe_id: str = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
-):    
+):        
     if recipe_id:
-        recipe = db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID).first()
+        if not current_user.Role:
+            recipe = db.query(Recipe).filter_by(RecipeID=recipe_id).first()
+        else:
+            recipe = db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID).first()
         if not recipe:
             raise HTTPException(status_code=404, detail="Recipe not found")
         return recipe
     else:
+        if not current_user.Role:
+            recipes = db.query(Recipe).all()
+            return recipes
         recipes = db.query(Recipe).filter_by(UserID=current_user.UserID).all()
         return recipes
 
@@ -117,7 +123,10 @@ def update_recipe(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    db_recipe = db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID).first()
+    if not current_user.Role:
+        db_recipe = db.query(Recipe).filter_by(RecipeID=recipe_id).first()
+    else:
+        db_recipe = db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID).first()
     if not db_recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
 
@@ -132,7 +141,11 @@ def delete_recipe(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    db_recipe = db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID).first()
+    if not current_user.Role:
+        db_recipe = db.query(Recipe).filter_by(RecipeID=recipe_id).first()
+    else:
+        db_recipe = db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID).first()
+    
     if not db_recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
     db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID).delete()
