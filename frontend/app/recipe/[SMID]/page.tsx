@@ -1,11 +1,11 @@
 "use client";
+
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import CommentList from "../../components/CommentList";
-import {Post, Comment, Recipe} from "../../types"
-import {useEffect, useState } from "react";
-import { useRouter } from "next/router";
-
+import { Post, Comment, Recipe } from "../../types"
+import { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
 
 const API_BASE_URL = "http://127.0.0.1:5000";
 
@@ -127,31 +127,24 @@ const RecipePage = ({params}: {params: {SMID: string}}) => {
             <main className="flex-grow p-12">
                 {/* Recipe Section */}
                 <div className="dark:bg-zinc-800 text-white rounded-lg shadow flex flex-col gap-6 p-6">
-                    {/* Recipe Image and Description */}
                     <div className="flex flex-col lg:flex-row gap-6">
-                        <img
-                            src="https://via.placeholder.com/200"
-                            alt="Recipe"
-                            className="w-1/4 lg:w-1/4 rounded-lg object-cover max-h-84"
-                        />
                         <div className="p-4">
                             {recipe && (
                                 <>
-                                    <h1 className="text-lg font-bold mb-2">{recipe.RecipeName}</h1>
-                                    <p className="text-sm">
+                                    <h1 className="text-2xl font-bold mb-2">{recipe.RecipeName}</h1>
+                                    <ReactMarkdown className="mt-4">
                                         {recipe.RecipeContent}
-                                    </p>
+                                    </ReactMarkdown>
                                 </>
                             )}
                         </div>
                         <div className="space-x-4">
 
                         <button className="bg-white text-black px-4 py-2 rounded hover:bg-gray-400" onClick={handleLike}>
-                        Like
-                    </button>
+                            Like
+                        </button>
                         </div>
                     </div>
-                    
 
                     {/* Action Buttons */}
                     <div className="flex justify-between items-center px-4 pb-4">
@@ -169,7 +162,7 @@ const RecipePage = ({params}: {params: {SMID: string}}) => {
 
                         {/* Comment Input */}
                         <div className="mt-4">
-                        <textarea
+                            <textarea
                                 className="w-full p-3 rounded-lg bg-zinc-700 text-white"
                                 placeholder="Add a comment..."
                                 rows={4}

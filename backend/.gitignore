@@ -3,3 +3,4 @@ venv/
 .vscode/
 test.db
 mydatabase.db
+../*.DS_Store

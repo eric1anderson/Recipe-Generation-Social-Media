@@ -49,7 +49,7 @@ const RecipePageList = ({ post }: { post: Post }) => {
     return (
         <div 
             className="dark:bg-zinc-800 text-white rounded-lg shadow p-6 flex flex-col gap-4 relative hover:cursor-pointer hover:bg-zinc-700 transition-colors duration-300"
-            onClick={() => router.push(`/recipe-page/${post.SMID}`)}
+            onClick={() => router.push(`/recipe/${post.SMID}`)}
         >
             {/* Recipe Header */}
             <div className="flex justify-between items-center mb-4">
