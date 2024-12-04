@@ -12,7 +12,12 @@ export default function GenerateRecipe() {
   const [dietaryRestrictions, setDietaryRestrictions] = useState<string[]>([]);
   const [currentIngredient, setCurrentIngredient] = useState<string>("");
   const [currentDietaryRestriction, setCurrentDietaryRestriction] = useState<string>("");
-  const [recipeResponse, setRecipeResponse] = useState<string | null>(null);
+  const [recipeResponse, setRecipeResponse] = useState<{
+    title: string;
+    content: string;
+    ingredients: string[];
+  } | null>(null);
+
   const router = useRouter();
 
   const handleAddChip = (
@@ -36,22 +41,25 @@ export default function GenerateRecipe() {
 
   const handleGenerateRecipe = async () => {
     try {
-
       const params = new URLSearchParams();
       params.append("question", question);
       ingredients.forEach((ingredient) => params.append("ingredients", ingredient));
       dietaryRestrictions.forEach((restriction) => params.append("dietary_restrictions", restriction));
-
+  
       const response = await fetch(`http://127.0.0.1:5000/generate-recipe?${params.toString()}`, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
+          Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         },
       });
-
+  
       if (response.ok) {
         const data = await response.json();
-        setRecipeResponse(data.recipe);
+        setRecipeResponse({
+          title: data.title,
+          content: data.content,
+          ingredients: data.ingredients,
+        });
       } else {
         const errorData = await response.json();
         alert(errorData.detail || "Failed to generate recipe. Please try again.");
@@ -183,15 +191,15 @@ export default function GenerateRecipe() {
               Generate Recipe
             </button>
             {recipeResponse && (
-              <div className="mt-4">
-                <h2 className="text-lg font-bold">Generated Recipe:</h2>
-                <p className="mt-2 dark:bg-zinc-700 p-4 rounded">{recipeResponse}</p>
-                <button
-                  onClick={handleSaveRecipe}
-                  className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 mt-4"
-                >
-                  Save and Post Recipe
-                </button>
+              <div className="recipe-response mt-4 p-4 bg-gray-100 rounded shadow">
+                <h2 className="text-xl font-bold">{recipeResponse.title}</h2>
+                <p className="mt-2">{recipeResponse.content}</p>
+                <h3 className="mt-4 font-semibold">Ingredients:</h3>
+                <ul className="list-disc list-inside">
+                  {recipeResponse.ingredients.map((ingredient, index) => (
+                    <li key={index}>{ingredient}</li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>
