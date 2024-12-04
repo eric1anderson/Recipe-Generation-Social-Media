@@ -57,6 +57,16 @@ const UserProfilePage = () => {
     }
   };
 
+  // Add this effect to retrieve username from localStorage
+  useEffect(() => {
+    const storedUsername = localStorage.getItem("username");
+    if (storedUsername) {
+      setUserName(storedUsername);
+    } else {
+      fetchUserDetails(); // Fallback if not in localStorage
+    }
+  }, []); // Only run once
+
   // Update allergies
   const updateAllergies = async () => {
     setSaving(true);
@@ -103,11 +113,6 @@ const UserProfilePage = () => {
     setAllergies((prev) => prev.filter((_, i) => i !== index));
     setNewAllergies((prev) => prev.filter((item) => item !== allergyToRemove));
   };
-
-  useEffect(() => {
-    getSessionToken();
-    // fetchUserDetails();
-  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-black">
