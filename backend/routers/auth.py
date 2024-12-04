@@ -78,6 +78,7 @@ def signup(
     )
     return {
         "access_token": access_token,
+        "username": new_user.Name,
         "token_type": "bearer",
         "role": new_user.Role
     }
