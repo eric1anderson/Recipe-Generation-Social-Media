@@ -98,7 +98,7 @@ async def view_shopping_list_post(
     shopping_list_input = form.get('shopping_list', '').split('\n')
     shopping_list_input = [item.strip() for item in shopping_list_input if item.strip()]
 
-    # Delete existing items
+
     existing_items = db.query(ShoppingListItem).filter_by(UserID=current_user.UserID).all()
     existing_ingredients = {item.IngredientName for item in existing_items}
 
@@ -117,6 +117,31 @@ async def view_shopping_list_post(
                 "Content-Type": "application/json"
             }
         )
+
+@router.get("/delete_ingredient/{ingredient_name}")
+def delete_ingredient(ingredient_name: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    existing_items = db.query(ShoppingListItem).filter_by(UserID=current_user.UserID).all()
+    existing_ingredients = {item.IngredientName for item in existing_items}
+    existing_ingredients.discard(ingredient_name)
+
+    # delete the item
+    db.query(ShoppingListItem).filter_by(UserID=current_user.UserID).delete()
+
+    new_items = [
+        ShoppingListItem(UserID=current_user.UserID, IngredientName=item)
+        for item in existing_ingredients
+    ]
+    db.add_all(new_items)
+    db.commit()
+
+    return Response(
+            content=json.dumps({ "message": "Shopping list updated"}),
+            status_code=200,
+            headers={
+                "Content-Type": "application/json"
+            }
+        )
+
 
 
 @router.get('/save_shopping_list')
