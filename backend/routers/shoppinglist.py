@@ -99,12 +99,14 @@ async def view_shopping_list_post(
     shopping_list_input = [item.strip() for item in shopping_list_input if item.strip()]
 
     # Delete existing items
-    db.query(ShoppingListItem).filter_by(UserID=current_user.UserID).delete()
+    existing_items = db.query(ShoppingListItem).filter_by(UserID=current_user.UserID).all()
+    existing_ingredients = {item.IngredientName for item in existing_items}
 
     # Add new items
     new_items = [
         ShoppingListItem(UserID=current_user.UserID, IngredientName=item)
         for item in shopping_list_input
+        if item not in existing_ingredients
     ]
     db.add_all(new_items)
     db.commit()
