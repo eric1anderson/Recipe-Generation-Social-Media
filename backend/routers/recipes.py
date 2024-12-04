@@ -2,9 +2,8 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from sqlalchemy import func, or_, and_, not_
 from database import get_db
-from models import User, Recipe, Ingredient
+from models import User, Recipe, Ingredient, Allergy
 import openai
 import json
 from pydantic import BaseModel
@@ -101,13 +100,19 @@ def read_recipes(
     recipe_id: str = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
-):    
+):        
     if recipe_id:
-        recipe = db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID).first()
+        if not current_user.Role:
+            recipe = db.query(Recipe).filter_by(RecipeID=recipe_id).first()
+        else:
+            recipe = db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID).first()
         if not recipe:
             raise HTTPException(status_code=404, detail="Recipe not found")
         return recipe
     else:
+        if not current_user.Role:
+            recipes = db.query(Recipe).all()
+            return recipes
         recipes = db.query(Recipe).filter_by(UserID=current_user.UserID).all()
         return recipes
 
@@ -118,7 +123,10 @@ def update_recipe(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    db_recipe = db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID).first()
+    if not current_user.Role:
+        db_recipe = db.query(Recipe).filter_by(RecipeID=recipe_id).first()
+    else:
+        db_recipe = db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID).first()
     if not db_recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
 
@@ -133,7 +141,11 @@ def delete_recipe(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    db_recipe = db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID).first()
+    if not current_user.Role:
+        db_recipe = db.query(Recipe).filter_by(RecipeID=recipe_id).first()
+    else:
+        db_recipe = db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID).first()
+    
     if not db_recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
     db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID).delete()
@@ -141,60 +153,59 @@ def delete_recipe(
     db.commit()
     return JSONResponse(status_code=200, content={"message": "Recipe deleted successfully"})
 
-
-@router.get('/search_recipes')
-def search_recipes(
-        ingredient_filter: str = Query(None, description="Comma-separated list of ingredients to include"),
-        dietary_restriction_filter: str = Query(None, description="Comma-separated list of ingredients to exclude"),
-        db: Session = Depends(get_db)
+# create CRUD endpoints for allergy creation, reading, updating, and deletion
+@router.post('/allergies')
+def create_allergy(
+    ingredient: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-    ingredient_filter_list = []
-    if ingredient_filter:
-        ingredient_filter_list = [s.strip().lower() for s in ingredient_filter.split(',') if s.strip()]
+    new_allergy = Allergy(
+        UserID=current_user.UserID,
+        IngredientName=ingredient
+    )
+    db.add(new_allergy)
+    db.commit()
+    return JSONResponse(status_code=201, content={"message": "Allergy created successfully."})
 
-    dietary_restriction_filter_list = []
-    if dietary_restriction_filter:
-        dietary_restriction_filter_list = [s.strip().lower() for s in dietary_restriction_filter.split(',') if
-                                           s.strip()]
+@router.get('/allergies/{allergy_id}')
+def read_allergy(
+    allergy_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if not current_user.Role:
+        allergy = db.query(Allergy).filter_by(AllergyID=allergy_id).first()
+    else:
+        allergy = db.query(Allergy).filter_by(AllergyID=allergy_id, UserID=current_user.UserID).first()
+    if not allergy:
+        raise HTTPException(status_code=404, detail="Allergy not found")
+    return allergy
 
-    # Start with the base query for public recipes
-    query = db.query(Recipe).filter(Recipe.Visibility == True)
+@router.get('/allergiesall')
+def read_allergies(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if not current_user.Role:
+        allergies = db.query(Allergy).all()
+        return allergies
+    allergies = db.query(Allergy).filter_by(UserID=current_user.UserID).all()
+    return allergies
 
-    # If ingredient filters are provided
-    if ingredient_filter_list:
-        # Join with Ingredient and filter recipes that have at least one of the specified ingredients (case-insensitive)
-        query = query.join(Recipe.ingredients).filter(
-            func.lower(Ingredient.IngredientName).in_(ingredient_filter_list)
-        )
-
-    # If dietary restrictions are provided
-    if dietary_restriction_filter_list:
-        # Subquery to find RecipeIDs that should be excluded (case-insensitive)
-        subq = db.query(Recipe.RecipeID).join(Recipe.ingredients).filter(
-            func.lower(Ingredient.IngredientName).in_(dietary_restriction_filter_list)
-        )
-        # Exclude recipes that have any of the restricted ingredients
-        query = query.filter(~Recipe.RecipeID.in_(subq))
-
-    # Ensure distinct recipes in case of multiple joins
-    query = query.distinct()
-
-    # Fetch the results
-    recipes = query.all()
-
-    # Format the response
-    recipe_list = []
-    for recipe in recipes:
-        recipe_data = {
-            'RecipeID': recipe.RecipeID,
-            'RecipeName': recipe.RecipeName,
-            'RecipeContent': recipe.RecipeContent,
-            # Include other fields as needed
-        }
-        recipe_list.append(recipe_data)
-    if not recipe_list:
-        return {
-            "recipes": "No recipes found"
-        }
-
-    return {'recipes': recipe_list}
+@router.put('/allergies/{allergy_id}')
+def update_allergy(
+    allergy_id: str,
+    ingredient: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if not current_user.Role:
+        db_allergy = db.query(Allergy).filter_by(AllergyID=allergy_id).first()
+    else:
+        db_allergy = db.query(Allergy).filter_by(AllergyID=allergy_id, UserID=current_user.UserID).first()
+    if not db_allergy:
+        raise HTTPException(status_code=404, detail="Allergy not found")
+    db_allergy.IngredientName = ingredient
+    db.commit()
+    return db_allergy

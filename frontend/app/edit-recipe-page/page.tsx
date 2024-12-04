@@ -1,91 +1,120 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import React, { useState } from "react";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 const EditRecipePage = () => {
-    // State to manage form inputs
-    const [recipeTitle, setRecipeTitle] = useState("Spaghetti Bolognese");
-    const [recipeContent, setRecipeContent] = useState(
-        "This is a delicious recipe for Spaghetti Bolognese, perfect for a hearty dinner with family or friends."
-    );
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const id = searchParams.get("id");
+    const [recipeTitle, setRecipeTitle] = useState("");
+    const [recipeContent, setRecipeContent] = useState("");
+    console.log("reached here");;
+    useEffect(() => {
+        const fetchRecipe = async () => {
+            try {
+                const response = await fetch(`http://127.0.0.1:5000/recipes/${id}`, {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+                    },
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    setRecipeTitle(data.RecipeName);
+                    setRecipeContent(data.RecipeContent);
+                } else {
+                    alert("Failed to fetch recipe. Please try again.");
+                }
+            } catch (error) {
+                console.error("Error fetching recipe:", error);
+                alert("An error occurred. Please check your connection and try again.");
+            }
+        };
+        if (id) {
+            fetchRecipe();
+        }
+    }, [id]);
 
-    const handleUpdate = () => {
-        // Add logic to handle the recipe update
-        console.log("Updating Recipe:", { recipeTitle, recipeContent });
+    const handleUpdateRecipe = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        const recipeData = {
+            title: recipeTitle,
+            content: recipeContent,
+        };
+
+        try {
+            const response = await fetch(`http://127.0.0.1:5000/recipes/${id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+                },
+                body: JSON.stringify(recipeData),
+            });
+
+            if (response.ok) {
+                alert("Recipe updated successfully!");
+                router.push("/admin-page");
+            } else {
+                alert("Failed to update recipe. Please try again.");
+            }
+        } catch (error) {
+            console.error("Error updating recipe:", error);
+            alert("An error occurred. Please check your connection and try again.");
+        }
     };
 
     return (
-        <div className="min-h-screen flex flex-col">
-            <Navbar />
-            <main className="flex-grow p-6 text-white">
-                <div className="max-w-4xl mx-auto dark:bg-zinc-800 p-6 rounded-lg shadow-lg">
-                    {/* Recipe Image */}
-                    <div className="mb-6 flex justify-center">
-                        <img
-                            src="https://via.placeholder.com/300"
-                            alt="Recipe"
-                            className="w-100 h-100 object-cover rounded-lg"
-                        />
-                    </div>
-
-                    {/* Edit Form */}
-                    <form
-                        onSubmit={(e) => {
-                            e.preventDefault();
-                            handleUpdate();
-                        }}
-                        className="space-y-6"
-                    >
-                        {/* Recipe Title */}
-                        <div>
-                            <label
-                                htmlFor="recipe-title"
-                                className="block text-sm font-semibold mb-2"
-                            >
+        <ProtectedRoute allowedRoles={[false]}>
+            <div className="min-h-screen text-white">
+                <Navbar />
+                <main className="p-4">
+                    <div className="m-6 p-6 dark:bg-zinc-800 rounded-xl">
+                        <h1 className="text-lg font-bold mb-4">Edit Recipe</h1>
+                        <form onSubmit={handleUpdateRecipe}>
+                            <label className="block w-full mb-2 text-sm" htmlFor="recipe-title">
                                 Recipe Title
                             </label>
                             <input
+                                className="block w-full px-4 py-2 mb-2 text-gray-200 placeholder-gray-500 bg-white border rounded-lg dark:bg-zinc-800 dark:border-zinc-600 dark:placeholder-zinc-400 focus:border-blue-400 dark:focus:border-blue-300 focus:ring-opacity-40 focus:outline-none focus:ring focus:ring-blue-300"
                                 id="recipe-title"
-                                type="text"
+                                name="recipe-title"
                                 value={recipeTitle}
                                 onChange={(e) => setRecipeTitle(e.target.value)}
-                                className="w-full px-4 py-2 bg-white text-black border rounded-lg focus:ring focus:ring-blue-400 focus:outline-none"
+                                required
                             />
-                        </div>
-
-                        {/* Recipe Content */}
-                        <div>
-                            <label
-                                htmlFor="recipe-content"
-                                className="block text-sm font-semibold mb-2"
-                            >
-                                Recipe Content
+                            
+                            <label className="block w-full mb-2 text-sm" htmlFor="recipe-description">
+                                Recipe Description
                             </label>
                             <textarea
-                                id="recipe-content"
+                                className="block w-full px-4 py-2 mb-2 text-gray-200 placeholder-gray-500 bg-white border rounded-lg dark:bg-zinc-800 dark:border-zinc-600 dark:placeholder-zinc-400 focus:border-blue-400 dark:focus:border-blue-300 focus:ring-opacity-40 focus:outline-none focus:ring focus:ring-blue-300"
+                                id="recipe-description"
+                                name="recipe-description"
                                 value={recipeContent}
                                 onChange={(e) => setRecipeContent(e.target.value)}
-                                className="w-full h-32 px-4 py-2 bg-white text-black border rounded-lg focus:ring focus:ring-blue-400 focus:outline-none"
-                            ></textarea>
-                        </div>
-
-                        {/* Update Button */}
-                        <div className="text-center">
+                                required
+                            />
+                            
                             <button
+                                className="w-full py-2 bg-green-600 rounded-full hover:bg-green-500"
                                 type="submit"
-                                className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500"
                             >
                                 Update Recipe
                             </button>
-                        </div>
-                    </form>
-                </div>
-            </main>
-            <Footer />
-        </div>
+                        </form>
+                    </div>
+                </main>
+                <Footer />
+            </div>
+        </ProtectedRoute>
     );
 };
+
 
 export default EditRecipePage;
