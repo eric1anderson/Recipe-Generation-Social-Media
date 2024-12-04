@@ -111,7 +111,11 @@ const ShoppingListPage = () => {
             {ingredients.map((ingredient, index) => (
               <span
                 key={index}
-                className="bg-green-600 text-white px-2 py-1 rounded flex items-center gap-1"
+                className={`px-2 py-1 rounded flex items-center gap-1 ${
+                  newIngredients.includes(ingredient)
+                    ? "bg-blue-500 text-white"
+                    : "bg-green-600 text-white"
+                }`}
               >
                 {ingredient}
                 <button
