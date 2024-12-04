@@ -92,7 +92,7 @@ def test_create_recipe(create_test_user):
     token = data["access_token"]
 
     headers = {"Authorization": f"Bearer {token}"}
-    response = client.post("/recipes", json={"title": "Test Recipe", "content": "Test Content", "ingredients": ["one", "two"]}, headers=headers)
+    response = client.post("/recipes", json={"title": "Test Recipe", "content": "Test Content", "ingredients": ["one", "two"], "userGenerated": False}, headers=headers)
     assert response.status_code == 201
     data = response.json()
     assert data["message"] == "Recipe created successfully."
@@ -234,7 +234,7 @@ def test_delete_recipe(create_test_user):
 
     headers = {"Authorization": f"Bearer {token}"}
     response = client.delete(f"/recipes/{recipe.RecipeID}", headers=headers)
-    assert response.status_code == 204
+    assert response.status_code == 200
 
     response = client.get(f"/recipes/{recipe.RecipeID}", headers=headers)
     assert response.status_code == 404

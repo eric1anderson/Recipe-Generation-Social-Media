@@ -1,36 +1,60 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import RecipeList from "../components/RecipeList";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import ProtectedRoute from "../components/ProtectedRoute";
+import RecipeList from "../components/RecipeList";
 
 const AdminPage = () => {
-    const [recipeTitle, setRecipeTitle] = useState("")
-    const [recipeContent, setRecipeContent] = useState("")
-    const [recipes, setRecipes] = useState([
-        { id: "1", title: "Spaghetti Bolognese" },
-        { id: "2", title: "Chicken Curry" },
-        { id: "3", title: "Vegetable Stir Fry" },
-    ]);
-
+    const [recipeTitle, setRecipeTitle] = useState("Title");
+    const [recipeIngredients, setRecipeIngredients] = useState<string[]>([]);
+    const [newIngredient, setNewIngredient] = useState("");
+    const [recipeContent, setRecipeContent] = useState("Contents");
+    const [recipes, setRecipes] = useState<any[]>([]);
     const router = useRouter();
+    const fetchRecipes = async (setRecipes: React.Dispatch<React.SetStateAction<any[]>>) => {
+        try {
+            const response = await fetch("http://127.0.0.1:5000/recipesall", {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+                },
+            });
+            if (response.ok) {
+                const data = await response.json();
+                console.log(data);
+                setRecipes(data);
+            } else {
+                alert("Failed to fetch recipes. Please try again.");
+            }
+        } catch (error) {
+            console.error("Error fetching recipes:", error);
+            alert("An error occurred. Please check your connection and try again.");
+        }
+    };
+
+    useEffect(() => {
+        fetchRecipes(setRecipes);
+    }, []);
 
     const handleEditRecipe = (id: string) => {
-        router.push(`/edit-recipe-page/${id}`); // Navigate to the edit page
+        router.push(`/edit-recipe-page/?id=${id}`); // Navigate to the edit page
     };
 
     const handleDeleteRecipe = async (id: string) => {
         try {
-            const response = await fetch(`https://your-backend-url.com/api/recipes/${id}`, {
+            const response = await fetch(`http://127.0.0.1:5000/recipes/${id}`, {
                 method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+                },
             });
 
             if (response.ok) {
                 alert("Recipe deleted successfully!");
-                setRecipes(recipes.filter((recipe) => recipe.id !== id)); // Remove the recipe from the state
+                setRecipes(recipes.filter((recipe) => recipe.RecipeID !== id)); // Remove the recipe from the state
             } else {
                 alert("Failed to delete the recipe. Please try again.");
             }
@@ -40,34 +64,45 @@ const AdminPage = () => {
         }
     };
 
+    const handleAddIngredient = (event: React.KeyboardEvent<HTMLInputElement>) => {
+        if (event.key === "Enter" && newIngredient.trim() !== "") {
+            event.preventDefault();
+            setRecipeIngredients([...recipeIngredients, newIngredient]);
+            setNewIngredient("");
+        }
+    };
+
     const handleUploadRecipe = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault(); // prevent page reload on form submission
 
         const recipeData = {
             title: recipeTitle,
-            content: recipeContent
+            content: recipeContent,
+            ingredients: recipeIngredients, // Pass the list of ingredients
+            userGenerated: false,
         };
 
         try {
-            const resp = await fetch("", {
-                method: 'POST',
+            const response = await fetch("http://127.0.0.1:5000/recipes", {
+                method: "POST",
                 headers: {
                     "Content-Type": "application/json",
+                    Authorization: `Bearer ${localStorage.getItem("access_token")}`,
                 },
-                body: JSON.stringify(recipeData)
+                body: JSON.stringify(recipeData),
             });
 
-            if(resp.ok) {
-                // Clear the input fields
-                setRecipeTitle("");
-                setRecipeContent("")
+            if (response.ok) {
+                alert("Recipe uploaded successfully!");
+                fetchRecipes(setRecipes); // Fetch the updated list of recipes
             } else {
                 alert("Failed to upload recipe. Please try again.");
             }
-        } catch(err) {
-            console.error("Error uploading recipe: ", err);
-        } 
-    }
+        } catch (error) {
+            console.error("Error uploading recipe:", error);
+            alert("An error occurred. Please check your connection and try again.");
+        }
+    };
 
     return (
         <ProtectedRoute allowedRoles={[false]}>
@@ -89,6 +124,34 @@ const AdminPage = () => {
                                 onChange={(e) => setRecipeTitle(e.target.value)}
                                 required
                             />
+
+                            <label className="block w-full mb-2 text-sm" htmlFor="recipe-ingredients">
+                                Recipe Ingredients
+                            </label>
+                            <div className="flex flex-wrap items-center gap-2 bg-white dark:bg-zinc-700 p-2 rounded">
+                                {recipeIngredients.map((ingredient, index) => (
+                                    <span
+                                        key={index}
+                                        className="bg-green-600 text-white px-2 py-1 rounded flex items-center gap-1"
+                                    >
+                                        {ingredient}
+                                        <button
+                                            onClick={() => setRecipeIngredients(recipeIngredients.filter((_, i) => i !== index))}
+                                            className="text-white bg-red-500 rounded px-1"
+                                        >
+                                            ×
+                                        </button>
+                                    </span>
+                                ))}
+                                <input
+                                    type="text"
+                                    value={newIngredient}
+                                    onChange={(e) => setNewIngredient(e.target.value)}
+                                    onKeyDown={handleAddIngredient}
+                                    placeholder="Add ingredient"
+                                    className="dark:bg-zinc-700 dark:text-white flex-1 rounded p-1"
+                                />
+                            </div>
                             
                             <label className="block w-full mb-2 text-sm" htmlFor="recipe-description">
                                 Recipe Description
@@ -116,9 +179,9 @@ const AdminPage = () => {
                         <h1 className="text-lg font-bold mb-4">Manage Existing Recipes</h1>
                         {recipes.map((recipe) => (
                             <RecipeList
-                                key={recipe.id}
-                                id={recipe.id}
-                                title={recipe.title}
+                                key={recipe.RecipeID}
+                                id={recipe.RecipeID}
+                                title={recipe.RecipeName}
                                 onEdit={handleEditRecipe}
                                 onDelete={handleDeleteRecipe} // Pass the delete handler
                             />

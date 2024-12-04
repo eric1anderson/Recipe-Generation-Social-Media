@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from database import get_db
-from models import User, Recipe, Ingredient
+from models import User, Recipe, Ingredient, Allergy
 import openai
 import json
 from pydantic import BaseModel
@@ -100,13 +100,19 @@ def read_recipes(
     recipe_id: str = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
-):    
+):        
     if recipe_id:
-        recipe = db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID).first()
+        if not current_user.Role:
+            recipe = db.query(Recipe).filter_by(RecipeID=recipe_id).first()
+        else:
+            recipe = db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID).first()
         if not recipe:
             raise HTTPException(status_code=404, detail="Recipe not found")
         return recipe
     else:
+        if not current_user.Role:
+            recipes = db.query(Recipe).all()
+            return recipes
         recipes = db.query(Recipe).filter_by(UserID=current_user.UserID).all()
         return recipes
 
@@ -117,7 +123,10 @@ def update_recipe(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    db_recipe = db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID).first()
+    if not current_user.Role:
+        db_recipe = db.query(Recipe).filter_by(RecipeID=recipe_id).first()
+    else:
+        db_recipe = db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID).first()
     if not db_recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
 
@@ -132,10 +141,87 @@ def delete_recipe(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    db_recipe = db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID).first()
+    if not current_user.Role:
+        db_recipe = db.query(Recipe).filter_by(RecipeID=recipe_id)
+    else:
+        db_recipe = db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID)
+    
     if not db_recipe:
-        raise HTTPException(status_code=404, detail="Recipe not found")
-    db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID).delete()
-    db.query(Ingredient).filter_by(RecipeID=db_recipe.RecipeID).delete()
+        raise HTTPException(status_code=404, detail="Recipe not found")    
+    db.query(Ingredient).filter_by(RecipeID=db_recipe.first().RecipeID).delete()
+    db_recipe.delete()
     db.commit()
     return JSONResponse(status_code=200, content={"message": "Recipe deleted successfully"})
+
+# create CRUD endpoints for allergy creation, reading, updating, and deletion
+@router.post('/allergies')
+def create_allergy(
+    ingredient: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    new_allergy = Allergy(
+        UserID=current_user.UserID,
+        IngredientName=ingredient
+    )
+    db.add(new_allergy)
+    db.commit()
+    return JSONResponse(status_code=201, content={"message": "Allergy created successfully."})
+
+@router.get('/allergies/{allergy_id}')
+def read_allergy(
+    allergy_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if not current_user.Role:
+        allergy = db.query(Allergy).filter_by(AllergyID=allergy_id).first()
+    else:
+        allergy = db.query(Allergy).filter_by(AllergyID=allergy_id, UserID=current_user.UserID).first()
+    if not allergy:
+        raise HTTPException(status_code=404, detail="Allergy not found")
+    return allergy
+
+@router.get('/allergiesall')
+def read_allergies(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if not current_user.Role:
+        allergies = db.query(Allergy).all()
+        return allergies
+    allergies = db.query(Allergy).filter_by(UserID=current_user.UserID).all()
+    return allergies
+
+@router.put('/allergies/{allergy_id}')
+def update_allergy(
+    allergy_id: str,
+    ingredient: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if not current_user.Role:
+        db_allergy = db.query(Allergy).filter_by(AllergyID=allergy_id).first()
+    else:
+        db_allergy = db.query(Allergy).filter_by(AllergyID=allergy_id, UserID=current_user.UserID).first()
+    if not db_allergy:
+        raise HTTPException(status_code=404, detail="Allergy not found")
+    db_allergy.IngredientName = ingredient
+    db.commit()
+    return db_allergy
+
+@router.delete('/allergies/{allergy_id}')
+def delete_allergy(
+    allergy_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if not current_user.Role:
+        db_allergy = db.query(Allergy).filter_by(AllergyID=allergy_id)
+    else:
+        db_allergy = db.query(Allergy).filter_by(AllergyID=allergy_id, UserID=current_user.UserID)
+    if not db_allergy:
+        raise HTTPException(status_code=404, detail="Allergy not found")
+    db_allergy.delete()
+    db.commit()
+    return JSONResponse(status_code=200, content={"message": "Allergy deleted successfully"})
