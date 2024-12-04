@@ -1,14 +1,23 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const Navbar = () => {
     const router = useRouter();
+    const [userName, setUserName] = useState("");
+
+    useEffect(() => {
+        const storedUserName = localStorage.getItem("username");
+        if (storedUserName) {
+            setUserName(storedUserName);
+        }
+    }, []);
 
     const handleLogout = async () => {
-        try {    
+        try {
             localStorage.removeItem("access_token");
-    
+            localStorage.removeItem("username");
             router.push("/");
         } catch (error) {
             console.error("Logout failed:", error);
@@ -18,7 +27,7 @@ const Navbar = () => {
     return (
         <nav className="w-full flex flex-wrap dark:bg-zinc-800 justify-between sticky top-0 z-10">
             <div className="w-1/5 ml-6 my-4">
-                <a href="http://localhost:3000/user-page">
+                <a href="http://127.0.0.1:3000/user-page">
                     <h1 className="text-xl font-bold text-white">Recipe App</h1>
                 </a>
             </div>
@@ -27,6 +36,9 @@ const Navbar = () => {
                     <li className="mx-4 text-white hover:text-gray-300 cursor-pointer"><a href="http://localhost:3000/upload-recipe-page">Upload Recipe</a></li>
                     <li className="mx-4 text-white hover:text-gray-300 cursor-pointer"><a href="http://localhost:3000/recipe-page">Recipes</a></li>
                     <li className="mx-4 text-white hover:text-gray-300 cursor-pointer"><a href="http://localhost:3000/shoppinglist-page">Shopping List</a></li>
+                    <a href="http://127.0.0.1:3000/user-profile">
+                        <li className="mx-4 text-white">Welcome, {userName || "Guest"}</li>
+                    </a>
                     <li 
                         className="mx-4 text-white hover:text-gray-300 cursor-pointer"
                         onClick={handleLogout}
