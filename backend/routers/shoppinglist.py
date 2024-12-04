@@ -99,7 +99,7 @@ async def view_shopping_list_post(
     shopping_list_input = [item.strip() for item in shopping_list_input if item.strip()]
 
     # Delete existing items
-    db.query(ShoppingListItem).filter_by(UserID=current_user.UserID).delete()
+    # db.query(ShoppingListItem).filter_by(UserID=current_user.UserID).delete()
 
     # Add new items
     new_items = [
