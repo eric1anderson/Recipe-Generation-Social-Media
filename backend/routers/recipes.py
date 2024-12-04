@@ -1,22 +1,27 @@
 from typing import List
-from fastapi import APIRouter, Request, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from database import get_db
-from models import User, Recipe
+from models import User, Recipe, Ingredient
 import openai
 import json
 from pydantic import BaseModel
+from routers.auth import get_current_user  # Import the dependency
 
 router = APIRouter()
 
 # Set your OpenAI API key
-openai.api_key = 'KEY'
+openai.api_key = 'API_KEY'
 
 class RecipeBase(BaseModel):
     title: str
     content: str
 
+class RecipeLLM(RecipeBase):
+    ingredients: List[str]
+    userGenerated: bool
+    
 class RecipeOutput(BaseModel):
     RecipeID: str
     UserID: str
@@ -27,13 +32,15 @@ class RecipeOutput(BaseModel):
     class Config:
         orm_mode = True
 
-@router.post('/generate_recipe')
-async def generate_recipe(request: Request, db: Session = Depends(get_db)):
-    if 'user_id' not in request.session:
-        return JSONResponse(status_code=401, content={"message": "Unauthorized"})
-    
-    form = await request.form()
-    prompt = form.get('prompt')
+@router.post('/generate-recipe')
+async def generate_recipe(
+    question: str,
+    ingredients: List[str] = Query(...),
+    dietary_restrictions: List[str] = Query(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    prompt = f"Create a recipe using the following ingredients: {ingredients}. Dietary restrictions: {dietary_restrictions}. Question: {question}"
     if not prompt:
         raise HTTPException(status_code=400, detail="Prompt is required.")
 
@@ -41,13 +48,15 @@ async def generate_recipe(request: Request, db: Session = Depends(get_db)):
     response = openai.beta.chat.completions.parse(
         model="gpt-4o",
         messages= [
-            { "role": "system", "content": "You create recipes using given ingredients." },
+            { "role": "system", "content": """You create recipes using given ingredients. 
+             Include the ingredients in the contents. Return only the names of ingredients
+               in a comma separated manner without any quantites.""" },
             {
                 "role": "user",
                 "content": prompt,
             },
         ],
-        response_format=RecipeBase,
+        response_format=RecipeLLM,
     )
     recipe_data = response.choices[0].message.content
 
@@ -56,44 +65,59 @@ async def generate_recipe(request: Request, db: Session = Depends(get_db)):
     except json.JSONDecodeError:
         raise HTTPException(status_code=500, detail="Failed to parse recipe data from OpenAI response.")
 
-
     return JSONResponse(status_code=201, content=recipe_json)
 
 @router.post('/recipes')
-def create_recipe(recipe: RecipeBase, request: Request, db: Session = Depends(get_db)):
-    if 'user_id' not in request.session:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    
-    user = db.query(User).filter_by(UserID=request.session['user_id']).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found.")
-
+def create_recipe(
+    recipe: RecipeLLM,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
     new_recipe = Recipe(
-        UserID=user.UserID,
+        UserID=current_user.UserID,
         RecipeName=recipe.title,
         RecipeContent=recipe.content,
-        Visibility=True
+        UserGenerated=recipe.userGenerated,
     )
     db.add(new_recipe)
     db.commit()
-    return JSONResponse(status_code=201, content={"message": "Recipe created successfully."})
+    db.refresh(new_recipe)  # Refresh to get the RecipeID
+    print("new_recipe", new_recipe.RecipeID)
+    # add ingredients to the database
+    for ingredient in recipe.ingredients:
+        new_ingredient = Ingredient(
+            RecipeID=new_recipe.RecipeID,
+            IngredientName=ingredient
+        )
+        db.add(new_ingredient)
+    db.commit()
+    return JSONResponse(status_code=201, content={"message": "Recipe created successfully.", "id": new_recipe.RecipeID})
 
 
 @router.get('/recipes/{recipe_id}', response_model=RecipeOutput)
 @router.get('/recipesall', response_model=List[RecipeOutput])
-def read_recipes(recipe_id: str = None, db: Session = Depends(get_db)):    
+def read_recipes(
+    recipe_id: str = None,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):    
     if recipe_id:
-        recipe = db.query(Recipe).filter_by(RecipeID=recipe_id).first()
+        recipe = db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID).first()
         if not recipe:
             raise HTTPException(status_code=404, detail="Recipe not found")
         return recipe
     else:
-        recipes = db.query(Recipe).all()
+        recipes = db.query(Recipe).filter_by(UserID=current_user.UserID).all()
         return recipes
 
 @router.put('/recipes/{recipe_id}', response_model=RecipeOutput)
-def update_recipe(recipe_id: str, recipe: RecipeBase, db: Session = Depends(get_db)):
-    db_recipe = db.query(Recipe).filter_by(RecipeID=recipe_id).first()
+def update_recipe(
+    recipe_id: str,
+    recipe: RecipeBase,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    db_recipe = db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID).first()
     if not db_recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
 
@@ -103,11 +127,15 @@ def update_recipe(recipe_id: str, recipe: RecipeBase, db: Session = Depends(get_
     return db_recipe
 
 @router.delete('/recipes/{recipe_id}')
-def delete_recipe(recipe_id: str, db: Session = Depends(get_db)):
-    db_recipe = db.query(Recipe).filter_by(RecipeID=recipe_id).first()
+def delete_recipe(
+    recipe_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    db_recipe = db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID).first()
     if not db_recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
-
-    db.delete(db_recipe)
+    db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID).delete()
+    db.query(Ingredient).filter_by(RecipeID=db_recipe.RecipeID).delete()
     db.commit()
-    return JSONResponse(status_code=204, content={"message": "Recipe deleted successfully"})
+    return JSONResponse(status_code=200, content={"message": "Recipe deleted successfully"})

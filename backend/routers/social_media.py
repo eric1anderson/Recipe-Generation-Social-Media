@@ -1,9 +1,11 @@
 # social_media.py
 
 from fastapi import APIRouter, Request, Depends, HTTPException
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
+import json
 from models import (
     User,
     Recipe,
@@ -12,17 +14,18 @@ from models import (
     Comment,
 )
 from database import get_db
+from routers.auth import get_current_user 
 
 router = APIRouter()
 templates = Jinja2Templates(directory="templates")
 
-def get_current_user(request: Request, db: Session):
-    if 'user_id' not in request.session:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    user = db.query(User).filter(User.UserID == request.session['user_id']).first()
-    if not user:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    return user
+# def get_current_user(request: Request, db: Session):
+#     if 'user_id' not in request.session:
+#         raise HTTPException(status_code=401, detail="Unauthorized")
+#     user = db.query(User).filter(User.UserID == request.session['user_id']).first()
+#     if not user:
+#         raise HTTPException(status_code=401, detail="Unauthorized")
+#     return user
 
 # Define Pydantic models for request bodies
 class RecipeIDRequest(BaseModel):
@@ -38,10 +41,9 @@ class CommentRequest(BaseModel):
 @router.post("/add_post")
 def add_post_on_social_media(
     request_body: RecipeIDRequest,
-    request: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
 ):
-    user = get_current_user(request, db)
     recipe_id = request_body.recipe_id
     recipe = db.query(Recipe).filter(Recipe.RecipeID == recipe_id).first()
     if not recipe:
@@ -57,14 +59,22 @@ def add_post_on_social_media(
         db.add(social_media_entry)
 
     db.commit()
-    return {
+    return Response(
+    content=json.dumps({
         "message": "Recipe visibility updated to public and added to social media",
         "SMID": social_media_entry.SMID
-    }
+    }),
+    status_code=200,
+    headers={"Content-Type": "application/json"}
+)
+
+    # return {
+    #     "message": "Recipe visibility updated to public and added to social media",
+    #     "SMID": social_media_entry.SMID
+    # }
 
 @router.get("/posts")
-def fetch_posts(request: Request, db: Session = Depends(get_db)):
-    user = get_current_user(request, db)
+def fetch_posts(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     # Get all public recipes
     recipes = db.query(Recipe).filter(Recipe.Visibility == True).all()
 
@@ -80,30 +90,40 @@ def fetch_posts(request: Request, db: Session = Depends(get_db)):
             "UserID": recipe.UserID,
             "Likes": social_media_entry.Likes if social_media_entry else 0
         })
-    return posts
+    return Response(
+        content=json.dumps({"posts": posts}),
+        status_code=200,
+        headers={"Content-Type": "application/json"}
+    )   
+
+    # return posts
 
 @router.post("/like_post")
 def like_post(
     request_body: SMIDRequest,
-    request: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
 ):
-    user = get_current_user(request, db)
     smid = request_body.smid
     social_media_entry = db.query(SocialMedia).filter(SocialMedia.SMID == smid).first()
     if not social_media_entry:
         raise HTTPException(status_code=404, detail="Post not found on social media")
     social_media_entry.Likes += 1
     db.commit()
-    return {"message": "Post liked successfully"}
+    return Response(
+    content=json.dumps({"message": "Post liked successfully"}),
+    status_code=200,
+    headers={"Content-Type": "application/json"}
+    )
+
+    # return {"message": "Post liked successfully"}
 
 @router.post("/unlike_post")
 def unlike_post(
     request_body: SMIDRequest,
-    request: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
 ):
-    user = get_current_user(request, db)
     smid = request_body.smid
     social_media_entry = db.query(SocialMedia).filter(SocialMedia.SMID == smid).first()
     if not social_media_entry:
@@ -111,26 +131,42 @@ def unlike_post(
     if social_media_entry.Likes > 0:
         social_media_entry.Likes -= 1
         db.commit()
-        return {"message": "Post unliked successfully"}
+        # return {"message": "Post unliked successfully"}
+        return Response(
+            content=json.dumps({"message": "Post unliked successfully"}),
+            status_code=200,
+            headers={"Content-Type": "application/json"}
+        )
+
     else:
-        return {"message": "Cannot unlike, likes count is already zero"}
+        return Response(
+            content=json.dumps({"message": "Cannot unlike, likes count is already zero"}),
+            status_code=200,
+            headers={"Content-Type": "application/json"}
+        )
+
+        # return {"message": "Cannot unlike, likes count is already zero"}
 
 @router.post("/add_bookmark")
 def add_bookmark(
     request_body: RecipeIDRequest,
-    request: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
 ):
-    user = get_current_user(request, db)
     recipe_id = request_body.recipe_id
     new_bookmark = Bookmark(UserID=user.UserID, RecipeID=recipe_id)
     db.add(new_bookmark)
     db.commit()
-    return {"message": "Bookmark added successfully"}
+    return Response(
+        content=json.dumps({"message": "Bookmark added successfully"}),
+        status_code=200,
+        headers={"Content-Type": "application/json"}
+    )
+
+    # return {"message": "Bookmark added successfully"}
 
 @router.get("/bookmarks")
-def fetch_bookmarks(request: Request, db: Session = Depends(get_db)):
-    user = get_current_user(request, db)
+def fetch_bookmarks(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     bookmarks = db.query(Bookmark).filter(Bookmark.UserID == user.UserID).all()
     recipes = []
     for bookmark in bookmarks:
@@ -143,15 +179,20 @@ def fetch_bookmarks(request: Request, db: Session = Depends(get_db)):
                 "UserID": recipe.UserID,
                 "Visibility": recipe.Visibility
             })
-    return recipes
+    return Response(
+        content=json.dumps({"bookmarks": recipes}),
+        status_code=200,
+        headers={"Content-Type": "application/json"}
+    )
+
+    # return recipes
 
 @router.post("/add_comment")
 def add_comment(
     request_body: CommentRequest,
-    request: Request,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user)
 ):
-    user = get_current_user(request, db)
     smid = request_body.smid
     comment_text = request_body.comment_text
     new_comment = Comment(
@@ -161,11 +202,15 @@ def add_comment(
     )
     db.add(new_comment)
     db.commit()
-    return {"message": "Comment added successfully"}
+    return Response(
+        content=json.dumps({"message": "Comment added successfully"}),
+        status_code=200,
+        headers={"Content-Type": "application/json"}
+    )
+    # return {"message": "Comment added successfully"}
 
 @router.get("/comments/{smid}")
-def fetch_comments(smid: str, request: Request, db: Session = Depends(get_db)):
-    user = get_current_user(request, db)
+def fetch_comments(smid: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     comments = db.query(Comment).filter(Comment.smid == smid).all()
     comments_with_user_info = []
     for comment in comments:
@@ -175,4 +220,9 @@ def fetch_comments(smid: str, request: Request, db: Session = Depends(get_db)):
             "UserID": commenter.UserID,
             "UserName": commenter.Name
         })
-    return comments_with_user_info
+    return Response(
+        content=json.dumps({"comments": comments_with_user_info}),
+        status_code=200,
+        headers={"Content-Type": "application/json"}
+    )
+    # return comments_with_user_info

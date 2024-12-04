@@ -1,14 +1,14 @@
 import os
 import tempfile
-import uuid
 import bcrypt
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from main import app
-from database import init_db, get_db, Base
+from database import Base, get_db
 from models import User, Recipe
+from routers.auth import get_password_hash  # Import your password hashing function
 
 # Create a temporary database file
 db_fd, db_path = tempfile.mkstemp(suffix=".db")
@@ -18,25 +18,35 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 
 client = TestClient(app)
 
+# Replace with valid test credentials
+TEST_USER_EMAIL = "testuser@example.com"
+TEST_USER_PASSWORD = "password123"
 
-@pytest.fixture(scope="module")
-def setup_module():
+@pytest.fixture(scope="module", autouse=True)
+def setup_database():
     Base.metadata.create_all(bind=engine)
-    db = TestingSessionLocal()
-    hashed_password = bcrypt.hashpw('password123'.encode('utf-8'), bcrypt.gensalt())
-    user = User(
-        Email=f'testuser@example.com',
-        Password=hashed_password.decode('utf-8'),
-        Role=True,
-        Name='Test User'
-    )
-    db.add(user)
-    db.commit()
-    db.close()
     yield
     Base.metadata.drop_all(bind=engine)
     os.close(db_fd)
     os.remove(db_path)
+
+@pytest.fixture(scope="module")
+def create_test_user():
+    db = TestingSessionLocal()
+    user = db.query(User).filter_by(Email=TEST_USER_EMAIL).first()
+    if not user:
+        hashed_password = get_password_hash(TEST_USER_PASSWORD)
+        user = User(
+            Email=TEST_USER_EMAIL,
+            Password=hashed_password,
+            Role=True,
+            Name="Test User"
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    db.close()
+    return user
 
 def override_get_db():
     try:
@@ -47,29 +57,79 @@ def override_get_db():
 
 app.dependency_overrides[get_db] = override_get_db
 
-def test_generate_recipe(setup_module):
-    # Login as the test user
-    response = client.post('/login', data={'email': 'testuser@example.com', 'password': 'password123'})
+def test_login(create_test_user):
+    """
+    Test user login and token retrieval.
+    """
+    response = client.post(
+        "/login",
+        data={
+            "email": TEST_USER_EMAIL,
+            "password": TEST_USER_PASSWORD
+        },
+        headers={"Content-Type": "application/x-www-form-urlencoded"}
+    )
     assert response.status_code == 200
+    data = response.json()
+    assert "access_token" in data
+    assert data["token_type"] == "bearer"
 
-    # Generate a recipe
-    response = client.post('/generate_recipe', data={'prompt': 'Create a recipe for a chocolate cake'})
+def test_generate_recipe(create_test_user):
+    """
+    Test generating a new recipe using LLM.
+    """
+    # Log in to get the token
+    response = client.post(
+        "/login",
+        data={
+            "email": TEST_USER_EMAIL,
+            "password": TEST_USER_PASSWORD
+        },
+        headers={"Content-Type": "application/x-www-form-urlencoded"}
+    )
+    data = response.json()
+    token = data["access_token"]
+
+    headers = {"Authorization": f"Bearer {token}"}
+    response = client.post(
+        "/generate-recipe",
+        params={
+            "question": "Create a recipe for a chocolate cake",
+            "ingredients": ["chocolate", "flour", "sugar"],
+            "dietary_restrictions": ["None"]
+        },
+        headers=headers
+    )
     assert response.status_code == 201
-    assert "title" in response.json()
-    assert "content" in response.json()
+    data = response.json()
+    assert "title" in data
+    assert "content" in data
 
-def test_generate_recipe_without_prompt(setup_module):
-    # Login as the test user
-    response = client.post('/login', data={'email': 'testuser@example.com', 'password': 'password123'})
-    assert response.status_code == 200
+def test_generate_recipe_without_prompt(create_test_user):
+    """
+    Test generating a recipe without a prompt.
+    """
+    # Log in to get the token
+    response = client.post(
+        "/login",
+        data={
+            "email": TEST_USER_EMAIL,
+            "password": TEST_USER_PASSWORD
+        },
+        headers={"Content-Type": "application/x-www-form-urlencoded"}
+    )
+    data = response.json()
+    token = data["access_token"]
 
-    # Attempt to generate a recipe without a prompt
-    response = client.post('/generate_recipe', data={})
+    headers = {"Authorization": f"Bearer {token}"}
+    response = client.post("/generate-recipe", json={"question": "", "ingredients": ["chocolate", "flour", "sugar"], "dietary_restrictions": []}, headers=headers)
     assert response.status_code == 400
     assert response.json() == {"detail": "Prompt is required."}
 
-def test_generate_recipe_unauthorized(setup_module):
-    # Attempt to generate a recipe without logging in
-    response = client.post('/generate_recipe', data={'prompt': 'Create a recipe for a chocolate cake'})
+def test_generate_recipe_unauthorized():
+    """
+    Test generating a recipe without logging in.
+    """
+    response = client.post("/generate-recipe", json={"question": "Create a recipe for a chocolate cake", "ingredients": ["chocolate", "flour", "sugar"], "dietary_restrictions": []})
     assert response.status_code == 401
-    assert response.json() == {"message": "Unauthorized"}
+    assert response.json() == {"detail": "Not authenticated"}
