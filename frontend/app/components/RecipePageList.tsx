@@ -1,48 +1,90 @@
-import React from "react";
+"use client";
 
-interface RecipePageListProps {
-  recipeName: string;
-  recipeContent: string;
-  likes: number;
-  onAddToShoppingList: () => void; // Function to handle adding to the shopping list
-}
+import { Post } from "../types"
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import ReactMarkdown from "react-markdown";
+import { truncateContent } from "../utils/utils";
+import DialogBox from "./DialogBox";
 
-const RecipePageList: React.FC<RecipePageListProps> = ({
-  recipeName,
-  recipeContent,
-  likes,
-  onAddToShoppingList,
-}) => {
-  return (
-    <div className="dark:bg-zinc-800 text-white rounded-lg shadow p-6 flex flex-col gap-4 relative">
-      {/* Recipe Header */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold">{recipeName}</h2>
-        <div className="space-x-4">
-          <button className="bg-white text-black px-4 py-2 rounded hover:bg-gray-400">
-            Like
-          </button>
-          <button className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-            Share
-          </button>
+const API_BASE_URL = "http://127.0.0.1:5000";
+
+const RecipePageList = ({ post }: { post: Post }) => {
+    const router = useRouter();
+    const {SMID, Recipe} = post;
+    const [likes, setLikes] = useState<number>(post.Likes);
+    const [dialog, setDialog] = useState({ isOpen: false, title: "", message: "" });
+
+    const showDialog = (title: string, message: string) => {
+        setDialog({ isOpen: true, title, message });
+    };
+
+    const closeDialog = () => {
+        setDialog({ isOpen: false, title: "", message: "" });
+    };
+
+    const handleAddtoShoppingList = async (recipeId: string) => {
+        try {
+          const response = await fetch(`http://127.0.0.1:5000/add_to_shopping_list/${recipeId}`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("access_token")}`
+            },
+          });
+    
+          if (response.ok) {
+            const data = await response.json();
+            showDialog("Success", data.message || "Ingredients added to shopping list!");
+          } else {
+            console.error("Failed to add ingredients to shopping list.");
+            showDialog("Error", "Failed to add ingredients. Please try again.");
+          }
+        } catch (error) {
+          console.error("Error adding ingredients to shopping list:", error);
+          showDialog("Error", "An error occurred. Please try again.");
+        }
+    };
+
+    return (
+        <div 
+            className="dark:bg-zinc-800 text-white rounded-lg shadow p-6 flex flex-col gap-4 relative hover:cursor-pointer hover:bg-zinc-700 transition-colors duration-300"
+            onClick={() => router.push(`/recipe/${post.SMID}`)}
+        >
+            {/* Recipe Header */}
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">{Recipe.RecipeName}</h2>
+                <div className="space-x-4">
+                    <div>
+                        {likes} Likes
+                    </div>
+                </div>
+            </div>
+            {/* Recipe Content */}
+            <div className="flex flex-col gap-6">
+                <div className="flex gap-6">
+                    <ReactMarkdown className="mt-2">
+                        {truncateContent(Recipe.RecipeContent, 3)}
+                    </ReactMarkdown>
+                </div>
+                {/* Add to Shopping List Button */}
+                <div className="flex justify-end">
+                    <button
+                        className="bg-blue-600 text-white px-4 py-2 rounded shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        onClick={() => handleAddtoShoppingList(Recipe.RecipeID)}
+                    >
+                        Add to Shopping List
+                    </button>
+                </div>
+            </div>
+            <DialogBox
+                isOpen={dialog.isOpen}
+                title={dialog.title}
+                message={dialog.message}
+                onClose={closeDialog}
+            />
         </div>
-      </div>
-
-      {/* Recipe Content */}
-      <div className="text-gray-300">{recipeContent}</div>
-
-      {/* Likes */}
-      <div className="mt-2 text-gray-400">Likes: {likes}</div>
-
-      {/* Add to Shopping List Button */}
-      <button
-        className="absolute bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        onClick={onAddToShoppingList}
-      >
-        Add to Shopping List
-      </button>
-    </div>
-  );
+    );
 };
 
 export default RecipePageList;
