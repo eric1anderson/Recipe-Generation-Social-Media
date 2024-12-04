@@ -90,11 +90,32 @@ const ShoppingListPage = () => {
     }
   };
 
-  const handleRemoveChip = (index: number) => {
+  const handleRemoveChip = async (index: number) => {
     const ingredientToRemove = ingredients[index];
-    setIngredients((prev) => prev.filter((_, i) => i !== index));
-    setNewIngredients((prev) => prev.filter((item) => item !== ingredientToRemove));
+    const sessionToken = getSessionToken();
+    if (!sessionToken) return;
+  
+    try {
+      const response = await fetch(`http://127.0.0.1:5000/delete_ingredient/${encodeURIComponent(ingredientToRemove)}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+        },
+      });
+  
+      if (response.ok) {
+        setIngredients((prev) => prev.filter((_, i) => i !== index));
+        setNewIngredients((prev) => prev.filter((item) => item !== ingredientToRemove));
+        // showDialog("Success", "Ingredient removed successfully!");
+      } else {
+        showDialog("Delete Error", "Failed to remove the ingredient. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error removing ingredient:", error);
+      showDialog("Error", "An unexpected error occurred. Please try again.");
+    }
   };
+  
 
   useEffect(() => {
     getSessionToken();
