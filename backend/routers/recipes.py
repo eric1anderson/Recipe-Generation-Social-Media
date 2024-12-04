@@ -135,7 +135,7 @@ def delete_recipe(
     db_recipe = db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID).first()
     if not db_recipe:
         raise HTTPException(status_code=404, detail="Recipe not found")
-
-    db.delete(db_recipe)
+    db.query(Recipe).filter_by(RecipeID=recipe_id, UserID=current_user.UserID).delete()
+    db.query(Ingredient).filter_by(RecipeID=db_recipe.RecipeID).delete()
     db.commit()
-    return JSONResponse(status_code=204, content={"message": "Recipe deleted successfully"})
+    return JSONResponse(status_code=200, content={"message": "Recipe deleted successfully"})
