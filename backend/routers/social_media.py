@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import Response
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 import json
@@ -73,45 +73,80 @@ def add_post_on_social_media(
     #     "SMID": social_media_entry.SMID
     # }
 
+
+
+def serialize_recipe(recipe):
+    """Helper function to serialize a Recipe object"""
+    return {
+        "RecipeID": recipe.RecipeID,
+        "RecipeName": recipe.RecipeName,
+        "RecipeContent": recipe.RecipeContent,
+        "Visibility": recipe.Visibility,
+        "UserGenerated": recipe.UserGenerated,
+        "UserID": recipe.UserID
+    }
+
 @router.get("/posts")
 def fetch_posts(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    # Get all public recipes
-    recipes = db.query(Recipe).filter(Recipe.Visibility == True).all()
+    # Fetch all public recipes with social media data in one query
+    social_media_posts = (
+        db.query(SocialMedia)
+        .options(joinedload(SocialMedia.recipe))  # Preload associated Recipe
+        .all()
+    )
 
-    # Include social media data
+    # Prepare the response
     posts = []
-    for recipe in recipes:
-        social_media_entry = db.query(SocialMedia).filter(SocialMedia.RecipeID == recipe.RecipeID).first()
+    for post in social_media_posts:
         posts.append({
-            "SMID": social_media_entry.SMID if social_media_entry else None,
-            "RecipeID": recipe.RecipeID,
-            "RecipeName": recipe.RecipeName,
-            "RecipeContent": recipe.RecipeContent,
-            "UserID": recipe.UserID,
-            "Likes": social_media_entry.Likes if social_media_entry else 0
+            "SMID": post.SMID,
+            "Likes": post.Likes,
+            "Recipe": serialize_recipe(post.recipe) if post.recipe else None
         })
+
     return Response(
         content=json.dumps({"posts": posts}),
         status_code=200,
         headers={"Content-Type": "application/json"}
-    )   
+    )
+
+@router.get("/posts/{smid}")
+def fetch_post(smid: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    social_media_post = (
+        db.query(SocialMedia)
+        .options(joinedload(SocialMedia.recipe))  
+        .filter(SocialMedia.SMID == smid)
+        .first()
+    )
+    if not social_media_post:
+        raise HTTPException(status_code=404, detail="Post not found on social media")
+    social_media_post = {
+        "SMID": social_media_post.SMID,
+        "Likes": social_media_post.Likes,
+        "Recipe": serialize_recipe(social_media_post.recipe) if social_media_post.recipe else None
+    }
+    return Response(
+        content=json.dumps({"post": social_media_post}),
+        status_code=200,
+        headers={"Content-Type": "application/json"}
+    )
 
     # return posts
 
-@router.post("/like_post")
+
+@router.post("/like_post/{smid}")
 def like_post(
-    request_body: SMIDRequest,
+    smid: str,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
-    smid = request_body.smid
     social_media_entry = db.query(SocialMedia).filter(SocialMedia.SMID == smid).first()
     if not social_media_entry:
         raise HTTPException(status_code=404, detail="Post not found on social media")
     social_media_entry.Likes += 1
     db.commit()
     return Response(
-    content=json.dumps({"message": "Post liked successfully"}),
+    content=json.dumps({"message": "Post liked successfully", "Likes": social_media_entry.Likes}),
     status_code=200,
     headers={"Content-Type": "application/json"}
     )
@@ -211,14 +246,15 @@ def add_comment(
 
 @router.get("/comments/{smid}")
 def fetch_comments(smid: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    comments = db.query(Comment).filter(Comment.smid == smid).all()
+    comments = db.query(Comment).filter(Comment.SMID == smid).all()
     comments_with_user_info = []
     for comment in comments:
         commenter = db.query(User).filter(User.UserID == comment.UserID).first()
         comments_with_user_info.append({
+            "CommentID": comment.CommentID,
             "CommentText": comment.CommentText,
             "UserID": commenter.UserID,
-            "UserName": commenter.Name
+            "UserName": commenter.Name,
         })
     return Response(
         content=json.dumps({"comments": comments_with_user_info}),
