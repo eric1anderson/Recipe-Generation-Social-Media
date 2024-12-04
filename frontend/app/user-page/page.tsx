@@ -11,8 +11,6 @@ import { Post } from "../types";
 
 const API_BASE_URL = "http://127.0.0.1:5000";
 
-
-
 export default function UserPage() {
 
     const [posts, setPosts] = useState<Post[]>([]);
@@ -60,7 +58,7 @@ export default function UserPage() {
                                 
                             </div>
                             <div
-                            className="dark:bg-zinc-800 text-white rounded-lg shadow p-6 w-full lg:w-1/3 h-[200px] sticky top-[4.5rem] flex flex-col justify-between"
+                                className="dark:bg-zinc-800 text-white rounded-lg shadow p-6 w-full lg:w-1/3 h-[200px] sticky top-[4.5rem] flex flex-col justify-between"
                             >
                                 <h2 className="text-xl font-bold">Generate a New Recipe</h2>
                                 <button
