@@ -2,6 +2,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
+from sqlalchemy import func, or_, and_, not_
 from database import get_db
 from models import User, Recipe, Ingredient
 import openai
@@ -139,3 +140,61 @@ def delete_recipe(
     db.query(Ingredient).filter_by(RecipeID=db_recipe.RecipeID).delete()
     db.commit()
     return JSONResponse(status_code=200, content={"message": "Recipe deleted successfully"})
+
+
+@router.get('/search_recipes')
+def search_recipes(
+        ingredient_filter: str = Query(None, description="Comma-separated list of ingredients to include"),
+        dietary_restriction_filter: str = Query(None, description="Comma-separated list of ingredients to exclude"),
+        db: Session = Depends(get_db)
+):
+    ingredient_filter_list = []
+    if ingredient_filter:
+        ingredient_filter_list = [s.strip().lower() for s in ingredient_filter.split(',') if s.strip()]
+
+    dietary_restriction_filter_list = []
+    if dietary_restriction_filter:
+        dietary_restriction_filter_list = [s.strip().lower() for s in dietary_restriction_filter.split(',') if
+                                           s.strip()]
+
+    # Start with the base query for public recipes
+    query = db.query(Recipe).filter(Recipe.Visibility == True)
+
+    # If ingredient filters are provided
+    if ingredient_filter_list:
+        # Join with Ingredient and filter recipes that have at least one of the specified ingredients (case-insensitive)
+        query = query.join(Recipe.ingredients).filter(
+            func.lower(Ingredient.IngredientName).in_(ingredient_filter_list)
+        )
+
+    # If dietary restrictions are provided
+    if dietary_restriction_filter_list:
+        # Subquery to find RecipeIDs that should be excluded (case-insensitive)
+        subq = db.query(Recipe.RecipeID).join(Recipe.ingredients).filter(
+            func.lower(Ingredient.IngredientName).in_(dietary_restriction_filter_list)
+        )
+        # Exclude recipes that have any of the restricted ingredients
+        query = query.filter(~Recipe.RecipeID.in_(subq))
+
+    # Ensure distinct recipes in case of multiple joins
+    query = query.distinct()
+
+    # Fetch the results
+    recipes = query.all()
+
+    # Format the response
+    recipe_list = []
+    for recipe in recipes:
+        recipe_data = {
+            'RecipeID': recipe.RecipeID,
+            'RecipeName': recipe.RecipeName,
+            'RecipeContent': recipe.RecipeContent,
+            # Include other fields as needed
+        }
+        recipe_list.append(recipe_data)
+    if not recipe_list:
+        return {
+            "recipes": "No recipes found"
+        }
+
+    return {'recipes': recipe_list}
