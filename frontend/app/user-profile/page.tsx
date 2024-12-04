@@ -26,7 +26,7 @@ const UserProfilePage = () => {
     const token = localStorage.getItem("access_token");
     if (!token) {
       showDialog("Session Error", "Session token is missing. Redirecting to login.");
-      setTimeout(() => (window.location.href = "/"), 2000); // Redirect after 2 seconds
+      setTimeout(() => (window.location.href = "/"), 3000); // Redirect after 2 seconds
     }
     return token;
   };
@@ -106,7 +106,7 @@ const UserProfilePage = () => {
 
   useEffect(() => {
     getSessionToken();
-    fetchUserDetails();
+    // fetchUserDetails();
   }, []);
 
   return (

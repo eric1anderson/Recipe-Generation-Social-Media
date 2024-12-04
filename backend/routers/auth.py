@@ -82,7 +82,8 @@ def login(email: str = Form(...), password: str = Form(...), db: Session = Depen
         return {
             "access_token": access_token,
             "token_type": "bearer",
-            "role": user.Role
+            "role": user.Role,
+            "name": user.Name
         }
     else:
         raise HTTPException(
