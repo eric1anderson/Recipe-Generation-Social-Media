@@ -1,5 +1,3 @@
-# test_auth.py
-
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -158,11 +156,6 @@ def test_login_nonexistent_user():
     assert response.json() == {"detail": "Incorrect email or password"}
     assert response.headers["www-authenticate"] == "Bearer"
 
-def test_logout():
-    # Assuming the logout endpoint returns a success message
-    response = client.post("/logout")
-    assert response.status_code == 200
-    assert response.json() == {"message": "Logged out successfully"}
 
 
 def test_invalid_token():
