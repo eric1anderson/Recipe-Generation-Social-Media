@@ -9,7 +9,7 @@ import DialogBox from "./DialogBox";
 
 const API_BASE_URL = "http://127.0.0.1:5000";
 
-const RecipePageList = ({ bookmark }: { bookmark: Bookmark }) => {
+const BookmarkPageList = ({ bookmark }: { bookmark: Bookmark }) => {
     const router = useRouter();
     const {SMID, Recipe, BookmarkID} = bookmark;
     const [dialog, setDialog] = useState({ isOpen: false, title: "", message: "" });
@@ -24,7 +24,7 @@ const RecipePageList = ({ bookmark }: { bookmark: Bookmark }) => {
 
     const handleAddtoShoppingList = async (recipeId: string) => {
         try {
-          const response = await fetch(`http://127.0.0.1:5000/add_to_shopping_list/${recipeId}`, {
+          const response = await fetch(`${API_BASE_URL}/add_to_shopping_list/${recipeId}`, {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
@@ -47,7 +47,7 @@ const RecipePageList = ({ bookmark }: { bookmark: Bookmark }) => {
 
     return (
         <div 
-            className="dark:bg-zinc-800 text-white rounded-lg shadow p-6 flex flex-col gap-4 relative hover:cursor-pointer hover:bg-zinc-700 transition-colors duration-300"
+            className="dark:bg-zinc-800 text-white rounded-lg shadow p-6 flex flex-col gap-4 relative hover:cursor-pointer hover:bg-zinc-700 transition-colors duration-300 m-6"
             onClick={() => router.push(`/recipe/${SMID}`)}
         >
             {/* Recipe Header */}
@@ -81,4 +81,4 @@ const RecipePageList = ({ bookmark }: { bookmark: Bookmark }) => {
     );
 };
 
-export default RecipePageList;
+export default BookmarkPageList;
