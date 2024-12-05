@@ -40,16 +40,17 @@ export default function Bookmarks() {
       <div className="min-h-screen flex flex-col bg-black">
         <Navbar />
         <main className="flex-grow p-6">
-          <div className="mb-6">
+          <div className="mb-2">
             <h1 className="flex justify-center text-3xl font-bold text-white">Your Bookmarked Recipes</h1>
           </div>
 
           <div className="flex justify-center">
             <div className="w-full max-w-4xl">
-              {bookmarkedRecipes.map((bookmark) => (
+              {bookmarkedRecipes.length > 0 ? (bookmarkedRecipes.map((bookmark) => (
                 <BookmarkPageList key={bookmark.BookmarkID} bookmark={bookmark} />
-              ))}
-              
+              ))) : (
+                <p className="text-gray-400 text-center">No bookmarked recipes found.</p>
+              )}
             </div>
           </div>
         </main>
