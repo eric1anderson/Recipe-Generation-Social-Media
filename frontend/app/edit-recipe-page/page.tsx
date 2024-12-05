@@ -59,7 +59,7 @@ const EditRecipePage = () => {
 
             if (response.ok) {
                 alert("Recipe updated successfully!");
-                router.push("/admin-page");
+                router.push("/admin");
             } else {
                 alert("Failed to update recipe. Please try again.");
             }

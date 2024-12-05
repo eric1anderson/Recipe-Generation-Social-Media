@@ -34,7 +34,7 @@ const Navbar = () => {
             </div>
             <div className="flex items-center ml-auto mr-6">
                 <ul className="flex list-none m-0 p-0">
-                    <li className="mx-4 text-white hover:text-gray-300 cursor-pointer"><a href="http://localhost:3000/upload-recipe-page">Upload Recipe</a></li>
+                    <li className="mx-4 text-white hover:text-gray-300 cursor-pointer"><a href="http://localhost:3000/upload-recipe">Upload Recipe</a></li>
                     <li className="mx-4 text-white hover:text-gray-300 cursor-pointer"><a href="http://localhost:3000/bookmarks">Bookmarks</a></li>
                     <li className="mx-4 text-white hover:text-gray-300 cursor-pointer"><a href="http://localhost:3000/shoppinglist-page">Shopping List</a></li>
                     <li className="relative mx-4 text-white">
