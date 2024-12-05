@@ -38,8 +38,34 @@ virtualenv venv
 source venv/bin/activate # mac
 
 pip install -r requirements.txt
-# Add your OpenAI API key to backend/routers/recipes.py
+# IMPORTANT: Add your OpenAI API key to backend/routers/recipes.py
 # Add your secret key to backend/routers/auth.py
 python3 init_db.py
+python3 test_data.py # to optionally populate the database with content and to add an admin user
 python3 main.py # should run on port 5000
+
+# testing
+# navigate to /backend
+# the backend nor frontend need to be active for these tests
+pytest test_auth.py # to test authentication endpoints
+pytest test_llm_recipes.py # to test recipe generation endpoints
+pytest test_recipes.py # to test recipe endpoints
+pytest test_shopping_list.py # to test shopping list endpoints
+pytest test_social_media.py # to test social media endpoints  
 ```
+
+## User Guide
+- Start by registering with your email, name and password
+- On the homepage (user-page) you'll find your social media feed displaying public recipes, options to filter by cuisines types and an option to generate recipes.
+- Before diving in, you'll want to start by selecting your profile name and adding any dietary restrictions you have.
+- Click 'Recipe App' to return to the home page. To generate a recipe, enter the name of the dish you want to create. Be sure to add the list of ingredients that you have available as well as any dietary restrictions. (Type the name of the ingredient then press enter to add it.)
+- Once your recipe is generated you can save it
+- You can also upload your own recipes by clicking on 'Upload Recipe'. Here you can fill out the name of your dish, the type of cuisine, any ingredients, and the recipe itself.
+- Back on your home you'll find your recipes. You can like, bookmark, comment on, or add this recipe to your Shopping List. These social media posts are public so other users are free to interact with and save your recipe as well.
+- If you find a recipe you plan to cook, be sure to add it to your shopping list. Navigating to the Shopping List tab, you'll find your current shopping list where you can add or remove any ingredients.
+
+
+## Admin Guide
+- Admins are added manually to the database to prevent regular users access from creating a privileged account. 
+- An admin account can be activated by running backend/test_data.py. Here, example users are added to the database as well as an admin account with the email: 'admin@example.com' and password: 'root'
+- Admins have access to edit and delete any recipes on the platform
