@@ -4,16 +4,16 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
 import { useState, useEffect } from "react";
-import RecipePageList from "../components/RecipePageList";
-import { Post } from "../types";
+import BookmarkPageList from "../components/BookmarkPageList";
+import { Bookmark } from "../types";
 
 export default function Bookmarks() {
-  const [bookmarkedRecipes, setBookmarkedRecipes] = useState<Post[]>([]);
+  const [bookmarkedRecipes, setBookmarkedRecipes] = useState<Bookmark[]>([]);
 
   useEffect(() => {
     const fetchBookmarkedRecipes = async () => {
       try {
-        const response = await fetch("http://127.0.0.1:5000/posts", {
+        const response = await fetch("http://127.0.0.1:5000/bookmarks", {
           method: "GET",
           headers: {
             "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
@@ -22,7 +22,7 @@ export default function Bookmarks() {
 
         if (response.ok) {
           const data = await response.json();
-          setBookmarkedRecipes(data.posts);
+          setBookmarkedRecipes(data.bookmarks);
           console.log(data)
         } else {
           console.error("Failed to fetch bookmarked recipes.");
@@ -46,15 +46,10 @@ export default function Bookmarks() {
 
           <div className="flex justify-center">
             <div className="w-full max-w-4xl">
-              {bookmarkedRecipes.length > 0 ? (
-                bookmarkedRecipes.map((post, index) => (
-                  <div key={index} className="mb-6">
-                    <RecipePageList post={post} />
-                  </div>
-                ))
-              ) : (
-                <p className="text-gray-400 text-center">No bookmarked recipes found.</p>
-              )}
+              {bookmarkedRecipes.map((bookmark) => (
+                <BookmarkPageList key={bookmark.BookmarkID} bookmark={bookmark} />
+              ))}
+              
             </div>
           </div>
         </main>

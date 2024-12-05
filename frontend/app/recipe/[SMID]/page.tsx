@@ -37,7 +37,7 @@ const RecipePage = ({params}: {params: {SMID: string}}) => {
                     console.log(data);
                 }
             } catch (err) {
-                console.error("Failed to fetch comments:", err);
+                console.error("Failed to fetch posts:", err);
             }
         }
         const fetchComments = async () => {
@@ -125,9 +125,34 @@ const RecipePage = ({params}: {params: {SMID: string}}) => {
         }
     }
 
-    const handleBookmark = async () => {
-
+   const handleBookmark = async (recipe_id: string) => {
+    const token = localStorage.getItem("access_token");
+    if (!token) {
+        alert("You need to log in to bookmark a recipe!");
+        return;
     }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/add_bookmark`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ recipe_id }),
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log("Bookmark added:", data.message);
+        } else {
+            console.error("Failed to add bookmark:", response.statusText);
+        }
+    } catch (err) {
+        console.error("Error adding bookmark:", err);
+    }
+};
+
 
     return (
         <div className="min-h-screen flex flex-col bg-black">
@@ -158,7 +183,7 @@ const RecipePage = ({params}: {params: {SMID: string}}) => {
                                 />
                             </div>
 
-                            <div className="w-8 h-8 cursor-pointer hover:opacity-80" onClick={handleBookmark}>
+                            <div className="w-8 h-8 cursor-pointer hover:opacity-80" onClick={()=>recipe?.RecipeID && handleBookmark(recipe.RecipeID)}>
                                 <Image
                                     src={bookmarkIcon}
                                     alt="Bookmark"
