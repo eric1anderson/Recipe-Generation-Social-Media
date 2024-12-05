@@ -8,10 +8,9 @@ import DialogBox from "../components/DialogBox"; // Reuse the dialog box compone
 const UserProfilePage = () => {
   const [userName, setUserName] = useState<string>("");
   const [recipeCount, setRecipeCount] = useState<number>(0);
-  const [allergies, setAllergies] = useState<string[]>([]);
-  const [newAllergies, setNewAllergies] = useState<string[]>([]);
+  const [allergies, setAllergies] = useState<{ AllergyID: string; IngredientName: string }[]>([]);
   const [currentAllergy, setCurrentAllergy] = useState<string>("");
-  const [saving, setSaving] = useState(false);
+  const [unsavedAllergies, setUnsavedAllergies] = useState<string[]>([]);
   const [dialog, setDialog] = useState({ isOpen: false, title: "", message: "" });
 
   const showDialog = (title: string, message: string) => {
@@ -26,18 +25,18 @@ const UserProfilePage = () => {
     const token = localStorage.getItem("access_token");
     if (!token) {
       showDialog("Session Error", "Session token is missing. Redirecting to login.");
-      setTimeout(() => (window.location.href = "/"), 3000); // Redirect after 2 seconds
+      setTimeout(() => (window.location.href = "/"), 3000);
     }
     return token;
   };
 
-  // Fetch user details
-  const fetchUserDetails = async () => {
-    try {
-      const sessionToken = getSessionToken();
-      if (!sessionToken) return;
+  // Fetch all allergies on page load
+  const fetchAllergies = async () => {
+    const sessionToken = getSessionToken();
+    if (!sessionToken) return;
 
-      const response = await fetch("http://127.0.0.1:5000/user_profile", {
+    try {
+      const response = await fetch("http://127.0.0.1:5000/allergiesall", {
         method: "GET",
         headers: {
           Authorization: `Bearer ${sessionToken}`,
@@ -46,73 +45,84 @@ const UserProfilePage = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setUserName(data.name || "Unknown User");
-        setRecipeCount(data.recipe_count || 0);
-        setAllergies(data.allergies || []);
+        setAllergies(data); // Set the entire array of objects with AllergyID and IngredientName
       } else {
-        showDialog("Fetch Error", "Failed to fetch user details. Please try again.");
+        showDialog("Fetch Error", "Failed to fetch allergies. Please try again.");
       }
     } catch (error) {
-      console.error("Error fetching user details:", error);
-    }
-  };
-
-  // Add this effect to retrieve username from localStorage
-  useEffect(() => {
-    const storedUsername = localStorage.getItem("username");
-    if (storedUsername) {
-      setUserName(storedUsername);
-    } else {
-      fetchUserDetails(); // Fallback if not in localStorage
-    }
-  }, []); // Only run once
-
-  // Update allergies
-  const updateAllergies = async () => {
-    setSaving(true);
-    try {
-      const sessionToken = getSessionToken();
-      if (!sessionToken || newAllergies.length === 0) return;
-
-      const serializedAllergies = newAllergies.join("\n");
-
-      const response = await fetch("http://127.0.0.1:5000/user_allergies", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${sessionToken}`,
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({ allergies: serializedAllergies }),
-      });
-
-      if (response.ok) {
-        showDialog("Success", "Allergy preferences updated successfully!");
-        setNewAllergies([]);
-      } else {
-        showDialog("Update Error", "Failed to update allergy preferences. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error updating allergies:", error);
-    } finally {
-      setSaving(false);
+      console.error("Error fetching allergies:", error);
+      showDialog("Error", "An unexpected error occurred. Please try again.");
     }
   };
 
   // Add a new allergy
-  const handleAddAllergy = () => {
-    if (currentAllergy.trim() && !allergies.includes(currentAllergy.trim())) {
-      setAllergies((prev) => [...prev, currentAllergy.trim()]);
-      setNewAllergies((prev) => [...prev, currentAllergy.trim()]);
-      setCurrentAllergy("");
+  const handleAddAllergy = async () => {
+    if (!currentAllergy.trim() || allergies.some((allergy) => allergy.IngredientName === currentAllergy.trim())) {
+      return;
+    }
+
+    const sessionToken = getSessionToken();
+    if (!sessionToken) return;
+
+    const formData = new FormData();
+    formData.append("ingredient", currentAllergy.trim());
+
+    try {
+      const response = await fetch("http://127.0.0.1:5000/allergies", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        const newAllergy = await response.json();
+        setAllergies((prev) => [...prev, newAllergy]);
+        setUnsavedAllergies((prev) => [...prev, currentAllergy.trim()]);
+        setCurrentAllergy("");
+        showDialog("Success", "Allergy added successfully!");
+      } else {
+        showDialog("Add Error", "Failed to add allergy. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error adding allergy:", error);
+      showDialog("Error", "An unexpected error occurred. Please try again.");
     }
   };
 
-  // Remove an allergy
-  const handleRemoveAllergy = (index: number) => {
-    const allergyToRemove = allergies[index];
-    setAllergies((prev) => prev.filter((_, i) => i !== index));
-    setNewAllergies((prev) => prev.filter((item) => item !== allergyToRemove));
+  // Remove an allergy by AllergyID
+  const handleRemoveAllergy = async (allergyID: string) => {
+    const sessionToken = getSessionToken();
+    if (!sessionToken) return;
+
+    try {
+      const response = await fetch(`http://127.0.0.1:5000/allergies/${encodeURIComponent(allergyID)}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+        },
+      });
+
+      if (response.ok) {
+        setAllergies((prev) => prev.filter((allergy) => allergy.AllergyID !== allergyID));
+        showDialog("Success", "Allergy removed successfully!");
+      } else {
+        showDialog("Delete Error", "Failed to remove allergy. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error removing allergy:", error);
+      showDialog("Error", "An unexpected error occurred. Please try again.");
+    }
   };
+
+  useEffect(() => {
+    const storedUsername = localStorage.getItem("username");
+    if (storedUsername) {
+      setUserName(storedUsername);
+    }
+    fetchAllergies();
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-black">
@@ -130,14 +140,16 @@ const UserProfilePage = () => {
           </div>
           <h2 className="text-md font-bold text-white mb-2">Allergies</h2>
           <div className="flex flex-col items-start gap-2 bg-white dark:bg-zinc-700 p-2 rounded mb-4">
-            {allergies.map((allergy, index) => (
+            {allergies.map((allergy) => (
               <span
-                key={index}
-                className="bg-red-600 text-white px-2 py-1 rounded flex items-center gap-1"
+                key={allergy.AllergyID}
+                className={`px-2 py-1 rounded flex items-center gap-1 ${
+                  unsavedAllergies.includes(allergy.IngredientName) ? "bg-blue-500" : "bg-red-600"
+                } text-white`}
               >
-                {allergy}
+                {allergy.IngredientName}
                 <button
-                  onClick={() => handleRemoveAllergy(index)}
+                  onClick={() => handleRemoveAllergy(allergy.AllergyID)}
                   className="text-white bg-gray-500 rounded px-1"
                 >
                   ×
@@ -157,19 +169,6 @@ const UserProfilePage = () => {
               placeholder="Add allergy"
               className="dark:bg-zinc-700 dark:text-white flex-1 rounded p-1"
             />
-          </div>
-          <div className="flex justify-center mt-4">
-            <button
-              className={`py-2 px-4 w-[60%] rounded-lg ${
-                saving
-                  ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                  : "bg-green-600 text-white hover:bg-green-500"
-              }`}
-              onClick={updateAllergies}
-              disabled={saving}
-            >
-              {saving ? "Saving..." : "Save Preferences"}
-            </button>
           </div>
         </div>
       </main>
