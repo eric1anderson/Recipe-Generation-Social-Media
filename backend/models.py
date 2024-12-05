@@ -23,7 +23,7 @@ class User(Base):
     comments = relationship('Comment', back_populates='user')
     bookmarks = relationship('Bookmark', back_populates='user')
     shopping_list_items = relationship('ShoppingListItem', back_populates='user', cascade='all, delete-orphan')
-
+    social_media = relationship('SocialMedia', back_populates='user')
 class Recipe(Base):
     __tablename__ = 'recipe'
 
@@ -64,9 +64,11 @@ class SocialMedia(Base):
     SMID = Column(String(36), primary_key=True, default=generate_uuid)
     RecipeID = Column(String(36), ForeignKey('recipe.RecipeID'), nullable=False)
     Likes = Column(Integer, default=0)
+    UserID = Column(String(36), ForeignKey('users.UserID'), nullable=False)
 
     recipe = relationship('Recipe', back_populates='social_media')
     comments = relationship('Comment', back_populates='social')
+    user = relationship('User', back_populates='social_media')
 
 class Comment(Base):
     __tablename__ = 'comments'
