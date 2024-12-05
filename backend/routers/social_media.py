@@ -83,6 +83,7 @@ def serialize_recipe(recipe):
         "RecipeContent": recipe.RecipeContent,
         "Visibility": recipe.Visibility,
         "UserGenerated": recipe.UserGenerated,
+        "Cuisine": recipe.Cuisine,
         "UserID": recipe.UserID
     }
 
