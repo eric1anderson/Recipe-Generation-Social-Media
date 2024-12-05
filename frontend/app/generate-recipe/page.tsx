@@ -21,6 +21,7 @@ export default function GenerateRecipe() {
     userGenerated: boolean;
     cuisine: string;
   } | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const router = useRouter();
 
@@ -44,6 +45,7 @@ export default function GenerateRecipe() {
   };
 
   const handleGenerateRecipe = async () => {
+    setLoading(true);
     try {
       const response = await fetch(`http://127.0.0.1:5000/generate-recipe`, {
         method: "POST",
@@ -75,6 +77,8 @@ export default function GenerateRecipe() {
     } catch (error) {
       console.error("Error generating recipe:", error);
       alert("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -99,7 +103,6 @@ export default function GenerateRecipe() {
       });
 
       if (response.ok) {
-        alert("Recipe saved successfully!");
         const data = await response.json();
         const response_social_media = await fetch(`http://127.0.0.1:5000/add_post`, {
           method: "POST",
@@ -112,7 +115,7 @@ export default function GenerateRecipe() {
         router.push("/user-page");
       } else {
         const errorData = await response.json();
-        alert(errorData.detail || "Failed to save recipe.");
+        alert("Failed to save recipe.");
       }
       
 
@@ -139,7 +142,7 @@ export default function GenerateRecipe() {
                 onChange={(e) => setQuestion(e.target.value)}
               />
             </div>
-            <div className="mb-4">
+            <div className="mb-6">
               <label className="block text-sm mb-2">Ingredients to include:</label>
               <div className="flex flex-wrap items-center gap-2 bg-white dark:bg-zinc-700 p-2 rounded">
                 {ingredients.map((ingredient, index) => (
@@ -213,12 +216,18 @@ export default function GenerateRecipe() {
                 />
               </div>
             </div>
-            <button
-              onClick={handleGenerateRecipe}
-              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 mb-4"
-            >
-              Generate Recipe
-            </button>
+            <div className="flex items-center justify-center">
+              {loading ? (
+                <div className="flex justify-center animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-solid"></div>
+              ) : (recipeResponse == null &&
+                <button
+                  onClick={handleGenerateRecipe}
+                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 mb-2 mt-4"
+                >
+                  Generate Recipe
+                </button>
+              )}
+            </div>
             {recipeResponse && (
               <div className="recipe-response dark:bg-zinc-700 mt-4 p-4 bg-gray-100 rounded shadow">
                 <h2 className="text-xl font-bold">{recipeResponse.title}</h2>
