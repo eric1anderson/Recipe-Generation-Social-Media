@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import likeIcon from "../../icons/like.svg";
 import bookmarkIcon from "../../icons/bookmark.svg";
+import DialogBox from "@/app/components/DialogBox";
 
 const API_BASE_URL = "http://127.0.0.1:5000";
 
@@ -19,6 +20,16 @@ const RecipePage = ({params}: {params: {SMID: string}}) => {
     const [recipe, setRecipe] = useState<Recipe>();
     const [Likes, setLikes] = useState<number>(0);
     const [commentText, setCommentText] = useState<string>("");
+    const [dialog, setDialog] = useState({ isOpen: false, title: "", message: "" });
+
+    const showDialog = (title: string, message: string) => {
+        setDialog({ isOpen: true, title, message });
+    };
+
+    const closeDialog = () => {
+        setDialog({ isOpen: false, title: "", message: "" });
+    };
+
     useEffect(() => {
         const fetchPost = async () => {
             try {
@@ -144,6 +155,7 @@ const RecipePage = ({params}: {params: {SMID: string}}) => {
 
         if (response.ok) {
             const data = await response.json();
+            showDialog("Success", "Post has been bookmarked!");
             console.log("Bookmark added:", data.message);
         } else {
             console.error("Failed to add bookmark:", response.statusText);
@@ -227,6 +239,12 @@ const RecipePage = ({params}: {params: {SMID: string}}) => {
                     </div>
                 </div>
             </main>
+            <DialogBox
+                isOpen={dialog.isOpen}
+                title={dialog.title}
+                message={dialog.message}
+                onClose={closeDialog}
+            />
             <Footer />
         </div>
     );
