@@ -121,28 +121,44 @@ const RecipePage = ({params}: {params: {SMID: string}}) => {
             setLikes(data.Likes);
         }
     }
+
+    const handleBookmark = async () => {
+
+    }
+
     return (
         <div className="min-h-screen flex flex-col bg-black">
             <Navbar />
             <main className="flex-grow p-12">
                 {/* Recipe Section */}
                 <div className="dark:bg-zinc-800 text-white rounded-lg shadow flex flex-col gap-6 p-6">
-                    <div className="flex flex-col lg:flex-row gap-6">
-                        <div className="p-4">
+                    <div className="flex flex-col lg:flex-row gap-6 relative">
+                        <div className="p-4 flex-grow">
                             {recipe && (
-                                <>
-                                    <h1 className="text-2xl font-bold mb-2">{recipe.RecipeName}</h1>
-                                    <ReactMarkdown className="mt-4">
-                                        {recipe.RecipeContent}
-                                    </ReactMarkdown>
-                                </>
+                            <>
+                                <h1 className="text-2xl font-bold mb-2">{recipe.RecipeName}</h1>
+                                <ReactMarkdown className="mt-4">
+                                {recipe.RecipeContent}
+                                </ReactMarkdown>
+                            </>
                             )}
                         </div>
-                        <div className="space-x-4">
 
-                        <button className="bg-white text-black px-4 py-2 rounded hover:bg-gray-400" onClick={handleLike}>
+                        {/* Buttons Section */}
+                        <div className="flex flex-row space-x-4 absolute top-4 right-4">
+                            <button
+                            className="bg-white text-black px-4 py-2 rounded hover:bg-gray-400 text-sm"
+                            onClick={handleLike}
+                            >
                             Like
-                        </button>
+                            </button>
+
+                            <button
+                            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 text-sm"
+                            onClick={handleBookmark}
+                            >
+                            Bookmark
+                            </button>
                         </div>
                     </div>
 
