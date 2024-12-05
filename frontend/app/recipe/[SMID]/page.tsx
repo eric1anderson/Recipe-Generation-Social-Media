@@ -137,34 +137,56 @@ const RecipePage = ({params}: {params: {SMID: string}}) => {
     }
 
    const handleBookmark = async (recipe_id: string) => {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-        alert("You need to log in to bookmark a recipe!");
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE_URL}/add_bookmark`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ recipe_id }),
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            showDialog("Success", "Post has been bookmarked!");
-            console.log("Bookmark added:", data.message);
-        } else {
-            console.error("Failed to add bookmark:", response.statusText);
+        const token = localStorage.getItem("access_token");
+        if (!token) {
+            alert("You need to log in to bookmark a recipe!");
+            return;
         }
-    } catch (err) {
-        console.error("Error adding bookmark:", err);
-    }
-};
 
+        try {
+            const response = await fetch(`${API_BASE_URL}/add_bookmark`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ recipe_id }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                showDialog("Success", "Post has been bookmarked!");
+                console.log("Bookmark added:", data.message);
+            } else {
+                console.error("Failed to add bookmark:", response.statusText);
+            }
+        } catch (err) {
+            console.error("Error adding bookmark:", err);
+        }
+    };
+
+    const handleAddtoShoppingList = async (recipeId: string) => {
+        try {
+          const response = await fetch(`http://127.0.0.1:5000/add_to_shopping_list/${recipeId}`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("access_token")}`
+            },
+          });
+    
+          if (response.ok) {
+            const data = await response.json();
+            showDialog("Success", data.message || "Ingredients added to shopping list!");
+          } else {
+            console.error("Failed to add ingredients to shopping list.");
+            showDialog("Error", "Failed to add ingredients. Please try again.");
+          }
+        } catch (error) {
+          console.error("Error adding ingredients to shopping list:", error);
+          showDialog("Error", "An error occurred. Please try again.");
+        }
+    };
 
     return (
         <div className="min-h-screen flex flex-col bg-black">
@@ -202,6 +224,15 @@ const RecipePage = ({params}: {params: {SMID: string}}) => {
                                     width={32}
                                     height={32}
                                 />
+                            </div>
+
+                            <div className="flex justify-end">
+                                <button
+                                    className="bg-blue-600 text-white px-4 py-2 rounded shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    onClick={()=>recipe?.RecipeID && handleAddtoShoppingList(recipe.RecipeID)}
+                                >
+                                    Add to Shopping List
+                                </button>
                             </div>
                         </div>
                     </div>
