@@ -33,7 +33,8 @@ const Navbar = () => {
     return (
         <nav className="w-full flex flex-wrap dark:bg-zinc-800 justify-between sticky top-0 z-10">
             <div className="w-1/5 ml-6 my-4">
-                <a href="/user-page">
+                <a href={isAdmin ? "/admin" : "/user-page"}>
+                    {/* Conditionally render the link */}
                     <h1 className="text-xl font-bold text-white">Recipe App</h1>
                 </a>
             </div>
@@ -43,7 +44,7 @@ const Navbar = () => {
                     {isAdmin ? (
                         <>
                             <li className="mx-4 text-white hover:text-gray-300 cursor-pointer">
-                                <a href="/upload-recipe-page">Upload Recipe</a>
+                                <a href="/upload-recipe">Upload Recipe</a>
                             </li>
                             <li
                                 className="mx-4 text-white hover:text-gray-300 cursor-pointer"

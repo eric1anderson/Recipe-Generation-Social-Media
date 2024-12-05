@@ -34,7 +34,7 @@ export default function Login() {
           if (data.role === true) {
             router.push("/user-page");
           } else if (data.role === false) {
-            router.push("/admin-page");
+            router.push("/admin");
           }
         }
       } catch (err) {
@@ -68,7 +68,7 @@ export default function Login() {
         if (data.role) {
           router.push("/user-page");
         } else {
-          router.push("/admin-page");
+          router.push("/admin");
         }
       } else {
         const data = await response.json();
@@ -101,7 +101,7 @@ export default function Login() {
         if (data.role) {
           router.push("/user-page");
         } else {
-          router.push("/admin-page");
+          router.push("/admin");
         }
       } else {
         const data = await response.json();
