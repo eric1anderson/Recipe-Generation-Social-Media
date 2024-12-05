@@ -6,6 +6,7 @@ export type Recipe = {
     Visibility: boolean;
     UserGenerated: boolean;
     UserID: string;
+    Cuisine: string;
 };
 
 export type Post = {

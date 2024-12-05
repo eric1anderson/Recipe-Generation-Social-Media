@@ -68,7 +68,7 @@ export default function UploadRecipe() {
             <main className="flex-grow p-6">
                 <div className="p-6 dark:bg-zinc-800 rounded-lg shadow max-w-2xl mx-auto">
                     <h1 className="text-lg font-bold mb-4">Upload New Recipe</h1>
-                    <form onSubmit={handleUploadRecipe}>
+                    <form autoComplete="off" onSubmit={handleUploadRecipe}>
                         <label className="block w-full mb-2 text-sm" htmlFor="recipe-title">
                             Recipe Title
                         </label>
