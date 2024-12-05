@@ -81,7 +81,7 @@ export default function UploadRecipe() {
                         required
                     />
 
-                    <label className="block w-full mb-2 text-sm" htmlFor="recipe-cuisine">
+                    <label className="block w-full mb-2 text-sm mt-4" htmlFor="recipe-cuisine">
                         Recipe Cuisine
                     </label>
                     <input
@@ -94,7 +94,7 @@ export default function UploadRecipe() {
                         required
                     />
 
-                    <label className="block w-full mb-2 text-sm" htmlFor="recipe-ingredients">
+                    <label className="block w-full mb-2 text-sm mt-4" htmlFor="recipe-ingredients">
                         Recipe Ingredients
                     </label>
                     <div className="flex flex-wrap items-center gap-2 bg-white dark:bg-zinc-700 p-2 rounded mb-2">
@@ -122,7 +122,7 @@ export default function UploadRecipe() {
                         />
                     </div>
                     
-                    <label className="block w-full mb-2 text-sm" htmlFor="recipe-description">
+                    <label className="block w-full mb-2 text-sm mt-4" htmlFor="recipe-description">
                         Recipe Description
                     </label>
                     <textarea
@@ -136,7 +136,7 @@ export default function UploadRecipe() {
                     />
                     
                     <button
-                        className="w-full py-2 bg-green-600 rounded-full hover:bg-green-500"
+                        className="w-full py-2 bg-green-600 rounded-full hover:bg-green-500 mt-4"
                         type="submit"
                     >
                         Upload Recipe

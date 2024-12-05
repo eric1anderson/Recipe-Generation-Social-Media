@@ -170,7 +170,7 @@ const UserProfilePage = () => {
                 }
               }}
               placeholder="Add allergy"
-              className="dark:bg-zinc-700 dark:text-white flex-1 rounded p-1"
+              className="dark:bg-zinc-700 dark:text-white flex-1 rounded p-1 mt-2 w-full"
             />
           </div>
           <div className="flex justify-center mt-4">
