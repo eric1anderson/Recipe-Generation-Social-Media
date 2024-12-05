@@ -96,7 +96,6 @@ const AdminPage = () => {
                     message={dialog.message}
                     onClose={closeDialog}
                 />
-            <Footer />
             </div>
         </ProtectedRoute>
     );
