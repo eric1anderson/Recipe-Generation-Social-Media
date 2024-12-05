@@ -41,6 +41,15 @@ export default function UploadRecipe() {
             });
 
             if (response.ok) {
+                const data = await response.json();
+                const response_social_media = await fetch(`http://127.0.0.1:5000/add_post`, {
+                    method: "POST",
+                    headers: {
+                      Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+                      "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({recipe_id: data.id}),
+                  });
                 router.back();
             } else {
                 alert("An error occurred while uploading the recipe.");
