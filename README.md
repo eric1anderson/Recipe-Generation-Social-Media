@@ -40,5 +40,6 @@ source venv/bin/activate # mac
 pip install -r requirements.txt
 # Add your OpenAI API key to backend/routers/recipes.py
 # Add your secret key to backend/routers/auth.py
+python3 init_db.py
 python3 main.py # should run on port 5000
 ```
