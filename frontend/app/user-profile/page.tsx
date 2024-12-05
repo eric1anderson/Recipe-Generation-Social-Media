@@ -54,6 +54,32 @@ const UserProfilePage = () => {
     }
   };
 
+  // Add this effect to retrieve username from localStorage
+  useEffect(() => {
+    const fetchMyRecipes = async () => {
+      try {
+        const response = await fetch("http://127.0.0.1:5000/recipesall", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log(data);
+          setRecipeCount(data.length);
+        } else {
+          console.error("Failed to fetch user recipes.");
+        }
+      } catch (error) {
+        console.error("Error fetching user recipes:", error);
+      }
+    }
+    fetchMyRecipes();
+  }, []); // Only run once
+
+  // Update allergies
   const updateAllergies = async () => {
     setSaving(true);
     try {
@@ -137,9 +163,9 @@ const UserProfilePage = () => {
             <p>
               <strong>Name:</strong> {userName}
             </p>
-            {/* <p>
+            <p>
               <strong>Number of Recipes:</strong> {recipeCount}
-            </p> */}
+            </p>
           </div>
           <h2 className="text-md font-bold text-white mb-2">Allergies</h2>
           <div className="flex flex-col items-start gap-2 bg-white dark:bg-zinc-700 p-2 rounded mb-4">
