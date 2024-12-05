@@ -57,7 +57,7 @@ const Navbar = () => {
                         /* If not Admin, display the full menu */
                         <>
                             <li className="mx-4 text-white hover:text-gray-300 cursor-pointer">
-                                <a href="/upload-recipe-page">Upload Recipe</a>
+                                <a href="/upload-recipe">Upload Recipe</a>
                             </li>
                             <li className="mx-4 text-white hover:text-gray-300 cursor-pointer">
                                 <a href="/bookmarks">Bookmarks</a>
