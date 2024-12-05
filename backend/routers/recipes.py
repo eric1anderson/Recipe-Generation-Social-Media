@@ -34,25 +34,31 @@ class RecipeOutput(BaseModel):
     class Config:
         orm_mode = True
 
+from pydantic import BaseModel
+from typing import List
+
+class GenerateRecipeRequest(BaseModel):
+    question: str
+    ingredients: List[str]
+    dietary_restrictions: List[str]
+
 @router.post('/generate-recipe')
 async def generate_recipe(
-    question: str,
-    ingredients: List[str] = Query(...),
-    dietary_restrictions: List[str] = Query(...),
+    request: GenerateRecipeRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    prompt = f"Create a recipe using the following ingredients: {ingredients}. Dietary restrictions: {dietary_restrictions}. Question: {question}"
+    prompt = f"Create a recipe using the following ingredients: {request.ingredients}. Dietary restrictions: {request.dietary_restrictions}. Question: {request.question}"
     if not prompt:
         raise HTTPException(status_code=400, detail="Prompt is required.")
 
     # Call GPT-4o to generate a recipe with structured output
     response = openai.beta.chat.completions.parse(
         model="gpt-4o",
-        messages= [
+        messages=[
             { "role": "system", "content": """You create recipes using given ingredients. 
              Include the ingredients in the contents. Return only the names of ingredients
-               in a comma separated manner without any quantites.""" },
+               in a comma separated manner without any quantities.""" },
             {
                 "role": "user",
                 "content": prompt,

@@ -12,6 +12,8 @@ from models import (
     SocialMedia,
     Bookmark,
     Comment,
+    Ingredient,
+    Allergy
 )
 from database import get_db
 from routers.auth import get_current_user 
@@ -99,11 +101,23 @@ def fetch_posts(db: Session = Depends(get_db), user: User = Depends(get_current_
     # Prepare the response
     posts = []
     for post in social_media_posts:
-        posts.append({
-            "SMID": post.SMID,
-            "Likes": post.Likes,
-            "Recipe": serialize_recipe(post.recipe) if post.recipe else None
-        })
+        ingredients = db.query(Ingredient).filter(Ingredient.RecipeID == post.recipe.RecipeID).all()
+        ingredient_names = [ingredient.IngredientName for ingredient in ingredients]
+
+        allergens = db.query(Allergy).filter(Allergy.UserID == user.UserID).all()
+        allergen_names = [allergy.IngredientName for allergy in allergens]
+
+        allergen_found = False
+        for ingredient in ingredient_names:
+            if ingredient in allergen_names:
+                allergen_found = True
+                break
+        if not allergen_found:
+            posts.append({
+                "SMID": post.SMID,
+                "Likes": post.Likes,
+                "Recipe": serialize_recipe(post.recipe) if post.recipe else None
+            })
 
     return Response(
         content=json.dumps({"posts": posts}),
@@ -183,6 +197,7 @@ def unlike_post(
 
         # return {"message": "Cannot unlike, likes count is already zero"}
 
+
 @router.post("/add_bookmark")
 def add_bookmark(
     request_body: RecipeIDRequest,
@@ -191,6 +206,15 @@ def add_bookmark(
 ):
     recipe_id = request_body.recipe_id
     new_bookmark = Bookmark(UserID=user.UserID, RecipeID=recipe_id)
+    check_bookmark = db.query(Bookmark).filter(Bookmark.UserID == user.UserID, Bookmark.RecipeID == recipe_id).first()
+    if check_bookmark:
+        return Response(
+            content=json.dumps({"message": "Bookmark already exists"}),
+            status_code=200,
+            headers={"Content-Type": "application/json"}
+        )
+
+        # return {"message": "Bookmark already exists"}
     db.add(new_bookmark)
     db.commit()
     return Response(

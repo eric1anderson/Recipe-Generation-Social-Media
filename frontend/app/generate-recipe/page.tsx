@@ -11,6 +11,7 @@ export default function GenerateRecipe() {
   const [question, setQuestion] = useState<string>("");
   const [ingredients, setIngredients] = useState<string[]>([]);
   const [dietaryRestrictions, setDietaryRestrictions] = useState<string[]>([]);
+  const [cuisine, setCuisine] = useState<string>("");
   const [currentIngredient, setCurrentIngredient] = useState<string>("");
   const [currentDietaryRestriction, setCurrentDietaryRestriction] = useState<string>("");
   const [recipeResponse, setRecipeResponse] = useState<{
@@ -18,6 +19,7 @@ export default function GenerateRecipe() {
     content: string;
     ingredients: string[];
     userGenerated: boolean;
+    cuisine: string;
   } | null>(null);
 
   const router = useRouter();
@@ -43,16 +45,17 @@ export default function GenerateRecipe() {
 
   const handleGenerateRecipe = async () => {
     try {
-      const params = new URLSearchParams();
-      params.append("question", question);
-      ingredients.forEach((ingredient) => params.append("ingredients", ingredient));
-      dietaryRestrictions.forEach((restriction) => params.append("dietary_restrictions", restriction));
-  
-      const response = await fetch(`http://127.0.0.1:5000/generate-recipe?${params.toString()}`, {
+      const response = await fetch(`http://127.0.0.1:5000/generate-recipe`, {
         method: "POST",
         headers: {
+          "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("access_token")}`,
         },
+        body: JSON.stringify({
+          question,
+          ingredients,
+          dietary_restrictions: dietaryRestrictions,
+        }),
       });
   
       if (response.ok) {
@@ -63,6 +66,7 @@ export default function GenerateRecipe() {
           content: data.content,
           ingredients: data.ingredients,
           userGenerated: data.userGenerated,
+          cuisine: data.cuisine,
         });
       } else {
         const errorData = await response.json();
