@@ -131,15 +131,15 @@ const UserProfilePage = () => {
     <div className="min-h-screen flex flex-col bg-black">
       <Navbar />
       <main className="flex-grow p-12">
-        <div className="dark:bg-zinc-800 p-6 rounded-lg w-[80%] mx-auto shadow">
+        <div className="dark:bg-zinc-800 p-6 rounded-lg max-w-2xl mx-auto shadow">
           <h1 className="text-lg font-bold text-white mb-4">User Profile</h1>
           <div className="text-white mb-6">
             <p>
               <strong>Name:</strong> {userName}
             </p>
-            <p>
+            {/* <p>
               <strong>Number of Recipes:</strong> {recipeCount}
-            </p>
+            </p> */}
           </div>
           <h2 className="text-md font-bold text-white mb-2">Allergies</h2>
           <div className="flex flex-col items-start gap-2 bg-white dark:bg-zinc-700 p-2 rounded mb-4">
@@ -175,7 +175,7 @@ const UserProfilePage = () => {
           </div>
           <div className="flex justify-center mt-4">
             <button
-              className={`py-2 px-4 w-[60%] rounded-lg ${
+              className={`py-2 px-4 rounded-lg ${
                 saving
                   ? "bg-gray-600 text-gray-400 cursor-not-allowed"
                   : "bg-green-600 text-white hover:bg-green-500"
