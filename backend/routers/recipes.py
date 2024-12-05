@@ -246,3 +246,14 @@ def check_allergens(
             return JSONResponse(status_code=200, content={"result": 0})
 
     return JSONResponse(status_code=200, content={"result": 1})
+
+# get a list of ingredients given a recipe ID
+@router.get('/ingredients/{recipe_id}')
+def get_ingredients(
+    recipe_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    ingredients = db.query(Ingredient).filter(Ingredient.RecipeID == recipe_id).all()
+    ingredient_names = [ingredient.IngredientName for ingredient in ingredients]
+    return JSONResponse(status_code=200, content={"ingredients": ingredient_names})
