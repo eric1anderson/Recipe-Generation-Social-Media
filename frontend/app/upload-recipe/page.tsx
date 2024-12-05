@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 
 export default function UploadRecipe() {
     const [recipeTitle, setRecipeTitle] = useState("");
+    const [recipeCuisine, setRecipeCuisine] = useState("");
     const [recipeIngredients, setRecipeIngredients] = useState<string[]>([]);
     const [newIngredient, setNewIngredient] = useState("");
     const [recipeContent, setRecipeContent] = useState("");
@@ -27,6 +28,7 @@ export default function UploadRecipe() {
             title: recipeTitle,
             content: recipeContent,
             ingredients: recipeIngredients,
+            cuisine: recipeCuisine,
             userGenerated: false,
         };
 
@@ -76,6 +78,19 @@ export default function UploadRecipe() {
                         value={recipeTitle}
                         onChange={(e) => setRecipeTitle(e.target.value)}
                         placeholder="Title"
+                        required
+                    />
+
+                    <label className="block w-full mb-2 text-sm" htmlFor="recipe-cuisine">
+                        Recipe Cuisine
+                    </label>
+                    <input
+                        className="block w-full px-4 py-2 mb-2 text-gray-200 placeholder-gray-500 bg-white border rounded-lg dark:bg-zinc-800 dark:border-zinc-600 dark:placeholder-zinc-400 focus:border-blue-400 dark:focus:border-blue-300 focus:ring-opacity-40 focus:outline-none focus:ring focus:ring-blue-300"
+                        id="recipe-title"
+                        name="recipe-cuisine"
+                        value={recipeCuisine}
+                        onChange={(e) => setRecipeCuisine(e.target.value)}
+                        placeholder="Cuisine"
                         required
                     />
 

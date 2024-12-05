@@ -21,12 +21,14 @@ class RecipeBase(BaseModel):
 class RecipeLLM(RecipeBase):
     ingredients: List[str]
     userGenerated: bool
+    cuisine: str
     
 class RecipeOutput(BaseModel):
     RecipeID: str
     UserID: str
     RecipeName: str
     RecipeContent: str
+    Cuisine: str
     Visibility: bool
 
     class Config:
@@ -77,6 +79,7 @@ def create_recipe(
         UserID=current_user.UserID,
         RecipeName=recipe.title,
         RecipeContent=recipe.content,
+        Cuisine=recipe.cuisine,
         UserGenerated=recipe.userGenerated,
     )
     db.add(new_recipe)

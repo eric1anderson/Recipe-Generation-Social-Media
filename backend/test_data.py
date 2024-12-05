@@ -41,6 +41,7 @@ def add_test_data(email, password, is_admin = False):
         UserID=user.UserID,
         RecipeName='Spaghetti Bolognese',
         RecipeContent='Boil pasta. Cook sauce...',
+        Cuisine="Italian",
         Visibility=True
     )
     session.add(recipe1)
@@ -50,6 +51,7 @@ def add_test_data(email, password, is_admin = False):
         UserID=user.UserID,
         RecipeName='Chicken Curry',
         RecipeContent='Cook chicken. Add spices...',
+        Cuisine="Indian",
         Visibility=True
     )
     session.add(recipe2)
