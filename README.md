@@ -69,3 +69,300 @@ pytest test_social_media.py # to test social media endpoints
 - Admins are added manually to the database to prevent regular users access from creating a privileged account. 
 - An admin account can be activated by running backend/test_data.py. Here, example users are added to the database as well as an admin account with the email: 'admin@example.com' and password: 'root'
 - Admins have access to edit and delete any recipes on the platform
+
+### Endpoints
+#### Auth
+1. POST at `http://127.0.0.1:5000/signup`
+```bash
+request - name, email, password
+response - {
+  "access_token": string,
+  "username": string,
+  "token_type": string,
+  "role": boolean
+}
+```
+
+2. POST at `http://127.0.0.1:5000/login`
+```bash
+request - email, password
+response - {
+  "access_token": string,
+  "token_type": string,
+  "role": boolean,
+  "name": string
+}
+```
+
+3. GET at `http://127.0.0.1:5000/auth/verify`
+```bash
+response - {
+  "user_id": uuid,
+  "role": boolean,
+  "email": email,
+}
+```
+
+#### Recipes
+1. POST at `http://127.0.0.1:5000/generate-recipe`
+```bash
+response - {
+  "title": string,
+  "content": string,
+  "ingredients": List[string],
+  "userGenerated": boolean,
+  "cuisine": string,
+}
+```
+
+2. POST at `http://127.0.0.1:5000/recipes`
+```bash
+request - ingredients, userGenerated, cuisine
+response - {
+  "message": string, 
+  "id": uuid
+}
+```
+
+3. GET at `http://127.0.0.1:5000/recipes/{recipe_id}`
+```bash
+response - {
+  "recipeID": string,
+  "userID": string,
+  "recipeName": string,
+  "recipeContent": string,
+  "cuisine": string,
+  "visibility": boolean
+}
+```
+
+4. GET at `http://127.0.0.1:5000/recipesall`
+```bash
+response - [{
+  "recipeID": string,
+  "userID": string,
+  "recipeName": string,
+  "recipeContent": string,
+  "cuisine": string,
+  "visibility": boolean
+}]
+```
+
+5. PUT at `http://127.0.0.1:5000/recipes/{recipe_id}`
+```bash
+request - recipeID, recipeName, recipeContent
+response - {
+  "recipeID": string,
+  "userID": string,
+  "recipeName": string,
+  "recipeContent": string,
+  "cuisine": string,
+  "visibility": boolean
+}
+```
+
+6. DELETE at `http://127.0.0.1:5000/recipes/{recipe_id}`
+```bash
+request - recipeID
+response - {
+  "message": "Recipe deleted successfully"
+}
+```
+
+7. POST at `http://127.0.0.1:5000/allergies`
+```bash
+request - ingredient
+response - {
+  "message": "Allergy created successfully."
+}
+```
+
+8. GET at `http://127.0.0.1:5000/allergies/{allergy_id}`
+```bash
+response -  [{
+  "allergyID": uuid,
+  "ingredientName": string
+}]
+```
+
+9. PUT at `http://127.0.0.1:5000/allergies/{allergy_id}`
+```bash
+request - allergy_id, ingredient
+response - {
+  "allergyID": uuid,
+  "ingredientName": string
+}
+```
+
+10. DELETE at `http://127.0.0.1:5000/allergies/{allergy_id}`
+```bash
+response - {
+  "message": "Allergy deleted successfully"
+}
+```
+
+11. GET at `http://127.0.0.1:5000/check_allergens/{recipe_id}`
+```bash
+response - {
+  "result": 0 // 0 or 1 depending on yes or no
+}
+```
+
+12. GET at `http://127.0.0.1:5000/ingredients/{recipe_id}`
+```bash
+response - {
+  "ingredients": List[string]
+}
+```
+
+#### Shopping List
+1. GET at `http://127.0.0.1:5000/recipes`
+```bash
+response - [{
+  "recipeID": uuid,
+  "recipeName": string
+}]
+```
+
+2. GET at `http://127.0.0.1:5000/add_to_shopping_list/{recipe_id}`
+```bash
+response - { 
+  "message": "Ingredients added to shopping list"
+}
+```
+
+3. GET at `http://127.0.0.1:5000/shopping_list`
+```bash
+respoonse - {
+  "shopping_list": List[string]
+}
+```
+
+4. POST at `http://127.0.0.1:5000/shopping_list`
+```bash
+request - shoppingList
+response - {
+  { "message": "Shopping list updated"}
+}
+```
+
+5. DELETE at `http://127.0.0.1:5000/delete_ingredient/{ingredient_name}`
+```bash
+response - {
+  "message": "Shopping list updated"
+}
+```
+
+6. GET at `http://127.0.0.1:5000/save_shopping_list`
+```bash 
+response - { 
+  "shopping_list": List[string]
+}
+```
+
+#### Social Media
+1. POST at `http://127.0.0.1:5000/add_post`
+```bash
+request - recipeID
+response - {
+  "message": "Recipe visibility updated to public and added to social media",
+  "SMID": uuid
+}
+```
+
+2. GET at `http://127.0.0.1:5000/posts`
+```bash
+response - {
+  "posts": [{
+      "SMID": uuid,
+      "Likes": integer,
+      "Recipe": {
+        "recipeID": string,
+        "userID": string,
+        "recipeName": string,
+        "recipeContent": string,
+        "cuisine": string,
+        "visibility": boolean
+      }
+  }]
+}
+```
+
+3. GET at `http://127.0.0.1:5000/posts/{SMID}`
+```bash
+response - {
+  "post": {
+    "SMID": uuid,
+    "Likes": integer,
+    "Recipe": {
+      "recipeID": string,
+      "userID": string,
+      "recipeName": string,
+      "recipeContent": string,
+      "cuisine": string,
+      "visibility": boolean
+    }
+  }
+}
+```
+
+4. POST at `http://127.0.0.1:5000/like_post/{SMID}`
+```bash
+response - {
+  "message": "Post liked successfully", 
+  "Likes": integer
+}
+```
+
+5. POST at `http://127.0.0.1:5000/unlike_post`
+```bash
+response - {
+  "message": "Post unliked successfully"
+}
+```
+
+6. POST at `http://127.0.0.1:5000/add_bookmark`
+```bash
+request - recipeID
+response - {
+  "message": "Bookmark added successfully"
+}
+```
+
+7. GET at `http://127.0.0.1:5000/bookmark`
+```bash
+response - {
+  "bookmarks": [{
+    "SMID": uuid,
+    "BookmarkID": uuid,
+    "Recipe": {
+      "recipeID": string,
+      "userID": string,
+      "recipeName": string,
+      "recipeContent": string,
+      "cuisine": string,
+      "visibility": boolean
+    }
+  }]
+}
+```
+
+8. POST at `http://127.0.0.1:5000/add_comment`
+```bash
+request - SMID, comment_text
+response - {
+  "message": "Comment added successfully"
+}
+```
+
+9. GET at `http://127.0.0.1:5000/comments/{smid}`
+```bash
+{
+  "comments": {
+    "CommentID": uuid,
+    "CommentText": string,
+    "UserID": uuid,
+    "UserName": string,
+  }
+}
+```
