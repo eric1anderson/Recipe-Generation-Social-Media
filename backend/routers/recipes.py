@@ -225,3 +225,21 @@ def delete_allergy(
     db_allergy.delete()
     db.commit()
     return JSONResponse(status_code=200, content={"message": "Allergy deleted successfully"})
+
+@router.get('/check_allergens/{recipe_id}')
+def check_allergens(
+    recipe_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    ingredients = db.query(Ingredient).filter(Ingredient.RecipeID == recipe_id).all()
+    ingredient_names = [ingredient.IngredientName for ingredient in ingredients]
+
+    allergens = db.query(Allergy).filter(Allergy.UserID == current_user.UserID).all()
+    allergen_names = [allergy.IngredientName for allergy in allergens]
+
+    for ingredient in ingredient_names:
+        if ingredient in allergen_names:
+            return JSONResponse(status_code=200, content={"result": 0})
+
+    return JSONResponse(status_code=200, content={"result": 1})
