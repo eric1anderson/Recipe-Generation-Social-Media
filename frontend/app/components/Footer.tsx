@@ -15,7 +15,7 @@ const Footer = () => {
 
     return (
     <footer className= "w-full dark:bg-zinc-800 text-white py-8">
-      <div className="container mx-auto px-6 lg:px-20 flex flex-col md:flex-row justify-between items-center gap-6">
+      <div className="container mx-auto px-6 lg:pl-7 lg:pr-10 flex flex-col md:flex-row justify-between items-center gap-6">
         {/* Left Section */}
         <div className="flex flex-col items-center md:items-start text-center md:text-left">
           <h2 className="text-2xl font-bold">Recipe App</h2>
@@ -70,7 +70,7 @@ const Footer = () => {
             >
                 <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-7 w-7"
+                className="h-8 w-8"
                 viewBox="0 0 24 24"
                 fill="currentColor"
                 >

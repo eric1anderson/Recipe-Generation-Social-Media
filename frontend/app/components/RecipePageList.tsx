@@ -17,7 +17,7 @@ const RecipePageList = ({ post }: { post: Post }) => {
             onClick={() => router.push(`/recipe/${post.SMID}`)}
         >
             {/* Recipe Header */}
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-center mb-2">
                 <h2 className="text-xl font-bold">{Recipe.RecipeName}</h2>
                 <div className="space-x-4">
                     <div>
@@ -27,8 +27,8 @@ const RecipePageList = ({ post }: { post: Post }) => {
             </div>
             {/* Recipe Content */}
             <div className="flex flex-col gap-6">
-                <div className="flex gap-6">
-                    <ReactMarkdown className="mt-2">
+                <div className="flex gap-3">
+                    <ReactMarkdown>
                         {truncateContent(Recipe.RecipeContent, 3)}
                     </ReactMarkdown>
                 </div>
