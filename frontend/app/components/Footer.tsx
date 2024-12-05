@@ -1,5 +1,18 @@
+"use client";
+
+import { useEffect, useState } from "react";
+
 const Footer = () => {
+    const [isAdmin, setIsAdmin] = useState<boolean>(false); // State to track if user is an admin
+    
     const BASE_URL = "http://localhost:3000";
+    
+    useEffect(() => {
+        // Access localStorage only in the client-side effect
+        const storedRole = localStorage.getItem("role"); // "false" for Admin
+        setIsAdmin(storedRole === "false"); // Set to true if role is "false"
+    }, []);
+
     return (
     <footer className= "w-full dark:bg-zinc-800 text-white py-8">
       <div className="container mx-auto px-6 lg:px-20 flex flex-col md:flex-row justify-between items-center gap-6">
@@ -15,32 +28,36 @@ const Footer = () => {
         </div>
 
         {/* Center Section - Links */}
-        <nav className="flex flex-wrap justify-center space-x-6">
-          <a
-            href={`${BASE_URL}/upload-recipe`}
-            className="text-gray-400 hover:text-white text-sm transition cursor-pointer"
-          >
-            Upload Recipe
-          </a>
-          <a
-            href={`${BASE_URL}/bookmarks`}
-            className="text-gray-400 hover:text-white text-sm transition cursor-pointer"
-          >
-            Bookmarks
-          </a>
-          <a
-            href={`${BASE_URL}/shoppinglist-page`}
-            className="text-gray-400 hover:text-white text-sm transition cursor-pointer"
-          >
-            Shopping List
-          </a>
-          <a
-            href={`${BASE_URL}/user-profile`}
-            className="text-gray-400 hover:text-white text-sm transition cursor-pointer"
-          >
-            Profile
-          </a>
-        </nav>
+        <div className="flex justify-center items-center h-full">
+            <ul className="flex list-none m-0 p-0">
+                {/* If user is Admin (isAdmin is true), show only Upload Recipe */}
+                {isAdmin ? (
+                <>
+                    <li className="mx-4 text-white hover:text-gray-300 cursor-pointer">
+                    <a href="/upload-recipe">Upload Recipe</a>
+                    </li>
+                </>
+                ) : (
+                /* If not Admin, display the full menu */
+                <>
+                    <li className="mx-4 text-white hover:text-gray-300 cursor-pointer">
+                    <a href="/upload-recipe">Upload Recipe</a>
+                    </li>
+                    <li className="mx-4 text-white hover:text-gray-300 cursor-pointer">
+                    <a href="/bookmarks">Bookmarks</a>
+                    </li>
+                    <li className="mx-4 text-white hover:text-gray-300 cursor-pointer">
+                    <a href="/shoppinglist-page">Shopping List</a>
+                    </li>
+                    <li className="mx-4 text-white hover:text-gray-300 cursor-pointer">
+                    <a href="/user-profile">Profile</a>
+                    </li>
+                </>
+                )}
+            </ul>
+        </div>
+
+        
 
         {/* Right Section - Social Links */}
         <div className="flex space-x-4">
