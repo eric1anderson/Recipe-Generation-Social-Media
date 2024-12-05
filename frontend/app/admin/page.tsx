@@ -6,11 +6,21 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
 import RecipeList from "../components/RecipeList";
+import DialogBox from "../components/DialogBox";
 
 const AdminPage = () => {
     const [recipes, setRecipes] = useState<any[]>([]);
     const router = useRouter();
-    
+    const [dialog, setDialog] = useState({ isOpen: false, title: "", message: "" });
+
+    const showDialog = (title: string, message: string) => {
+        setDialog({ isOpen: true, title, message });
+    };
+
+    const closeDialog = () => {
+        setDialog({ isOpen: false, title: "", message: "" });
+    };
+
     const fetchRecipes = async (setRecipes: React.Dispatch<React.SetStateAction<any[]>>) => {
         try {
             const response = await fetch("http://127.0.0.1:5000/recipesall", {
@@ -50,14 +60,14 @@ const AdminPage = () => {
             });
 
             if (response.ok) {
-                alert("Recipe deleted successfully!");
+                showDialog("Success", "Post has been deleted!");
                 setRecipes(recipes.filter((recipe) => recipe.RecipeID !== id)); // Remove the recipe from the state
             } else {
-                alert("Failed to delete the recipe. Please try again.");
+                showDialog("Error", "Failed to delete the recipe. Please try again.");
             }
         } catch (error) {
             console.error("Error deleting recipe:", error);
-            alert("An error occurred. Please check your connection and try again.");
+            showDialog("Error", "An error occurred. Please check your connection and try again.");
         }
     };
 
@@ -80,6 +90,12 @@ const AdminPage = () => {
                     </div>
                 </main>
                 <Footer />
+                <DialogBox
+                    isOpen={dialog.isOpen}
+                    title={dialog.title}
+                    message={dialog.message}
+                    onClose={closeDialog}
+                />
             </div>
         </ProtectedRoute>
     );

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ProtectedRoute from "../components/ProtectedRoute";
+import DialogBox from "../components/DialogBox";
 
 const EditRecipePage = () => {
     const router = useRouter();
@@ -12,7 +13,16 @@ const EditRecipePage = () => {
     const id = searchParams.get("id");
     const [recipeTitle, setRecipeTitle] = useState("");
     const [recipeContent, setRecipeContent] = useState("");
-    console.log("reached here");;
+    const [dialog, setDialog] = useState({ isOpen: false, title: "", message: "" });
+
+    const showDialog = (title: string, message: string) => {
+        setDialog({ isOpen: true, title, message });
+    };
+
+    const closeDialog = () => {
+        setDialog({ isOpen: false, title: "", message: "" });
+    };
+
     useEffect(() => {
         const fetchRecipe = async () => {
             try {
@@ -27,11 +37,11 @@ const EditRecipePage = () => {
                     setRecipeTitle(data.RecipeName);
                     setRecipeContent(data.RecipeContent);
                 } else {
-                    alert("Failed to fetch recipe. Please try again.");
+                    showDialog("Error", "Failed to fetch recipe. Please try again");
                 }
             } catch (error) {
                 console.error("Error fetching recipe:", error);
-                alert("An error occurred. Please check your connection and try again.");
+                showDialog("Error", "An error occurred. Please check your connection and try again.");
             }
         };
         if (id) {
@@ -58,14 +68,14 @@ const EditRecipePage = () => {
             });
 
             if (response.ok) {
-                alert("Recipe updated successfully!");
+                showDialog("Success", "Recipe updated successfully!");
                 router.push("/admin");
             } else {
-                alert("Failed to update recipe. Please try again.");
+                showDialog("Error", "Failed to update recipe. Please try again.");
             }
         } catch (error) {
             console.error("Error updating recipe:", error);
-            alert("An error occurred. Please check your connection and try again.");
+            showDialog("Error", "An error occurred. Please check your connection and try again.");
         }
     };
 
@@ -89,7 +99,7 @@ const EditRecipePage = () => {
                                 required
                             />
                             
-                            <label className="block w-full mb-2 text-sm" htmlFor="recipe-description">
+                            <label className="block w-full mt-4 mb-2 text-sm" htmlFor="recipe-description">
                                 Recipe Description
                             </label>
                             <textarea
@@ -102,7 +112,7 @@ const EditRecipePage = () => {
                             />
                             
                             <button
-                                className="w-full py-2 bg-green-600 rounded-full hover:bg-green-500"
+                                className="w-full py-2 mt-4 bg-green-600 rounded-full hover:bg-green-500"
                                 type="submit"
                             >
                                 Update Recipe
@@ -110,6 +120,12 @@ const EditRecipePage = () => {
                         </form>
                     </div>
                 </main>
+                <DialogBox
+                    isOpen={dialog.isOpen}
+                    title={dialog.title}
+                    message={dialog.message}
+                    onClose={closeDialog}
+                />
                 <Footer />
             </div>
         </ProtectedRoute>

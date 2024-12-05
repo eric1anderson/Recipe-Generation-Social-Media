@@ -177,7 +177,22 @@ export default function Login() {
             onClick={() => setIsSignup(!isSignup)}
             className="mx-2 text-sm font-bold text-blue-500 dark:text-blue-400 hover:underline"
           >
-            {isSignup ? "Login" : "Register"}
+              {isSignup ? (
+                <button
+                  onClick={() => setIsSignup(!isSignup)}
+                  className="mx-2 text-sm font-bold text-blue-500 dark:text-blue-400 hover:underline"
+                >
+                  Login
+                </button>
+              ) : (
+                <a
+                  href="/register"
+                  className="mx-2 text-sm font-bold text-blue-500 dark:text-blue-400 hover:underline"
+                >
+                  Register
+                </a>
+              )
+            }
           </button>
         </div>
       </div>
