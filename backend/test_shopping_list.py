@@ -88,6 +88,7 @@ def test_get_recipes(create_test_user):
         RecipeName="Test Recipe",
         UserID=create_test_user.UserID,
         RecipeContent="Test content",
+        Cuisine="Test",
         Visibility=True
     )
     db.add(recipe)
@@ -138,6 +139,7 @@ def test_add_to_shopping_list(create_test_user):
         RecipeName="Test Recipe for Shopping List",
         UserID=create_test_user.UserID,
         RecipeContent="Test Content",
+        Cuisine="Test",
         Visibility=True
     )
 
