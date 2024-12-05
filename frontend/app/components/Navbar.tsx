@@ -40,7 +40,7 @@ const Navbar = () => {
             <div className="flex items-center ml-auto mr-6 relative">
                 <ul className="flex list-none m-0 p-0">
                     <li className="mx-4 text-white hover:text-gray-300 cursor-pointer">
-                        <a href="http://localhost:3000/upload-recipe-page">Upload Recipe</a>
+                        <a href="http://localhost:3000/upload-recipe">Upload Recipe</a>
                     </li>
                     <li className="mx-4 text-white hover:text-gray-300 cursor-pointer">
                         <a href="http://localhost:3000/bookmarks">Bookmarks</a>
