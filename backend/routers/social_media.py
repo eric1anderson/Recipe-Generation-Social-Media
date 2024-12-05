@@ -55,7 +55,7 @@ def add_post_on_social_media(
     # Create a SocialMedia entry if it doesn't exist
     social_media_entry = db.query(SocialMedia).filter(SocialMedia.RecipeID == recipe_id).first()
     if not social_media_entry:
-        social_media_entry = SocialMedia(RecipeID=recipe_id)
+        social_media_entry = SocialMedia(RecipeID=recipe_id, UserID=user.UserID)
         db.add(social_media_entry)
 
     db.commit()
@@ -202,20 +202,21 @@ def add_bookmark(
 
 @router.get("/bookmarks")
 def fetch_bookmarks(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
-    bookmarks = db.query(Bookmark).filter(Bookmark.UserID == user.UserID).all()
+    bookmarks = db.query(Bookmark).filter(Bookmark.UserID == user.UserID).options(joinedload(Bookmark.recipe)).all()
     recipes = []
+    bookmark_list = []
     for bookmark in bookmarks:
-        recipe = db.query(Recipe).filter(Recipe.RecipeID == bookmark.RecipeID).first()
-        if recipe:
-            recipes.append({
-                "RecipeID": recipe.RecipeID,
-                "RecipeName": recipe.RecipeName,
-                "RecipeContent": recipe.RecipeContent,
-                "UserID": recipe.UserID,
-                "Visibility": recipe.Visibility
-            })
+        if bookmark.recipe:
+            recipe = bookmark.recipe
+            smid = db.query(SocialMedia.SMID).filter(SocialMedia.RecipeID == recipe.RecipeID).first()
+            if smid:   
+                bookmark_list.append({
+                    "BookmarkID": bookmark.BookmarkID,
+                    "SMID": smid[0],
+                    "Recipe": serialize_recipe(recipe)
+                })
     return Response(
-        content=json.dumps({"bookmarks": recipes}),
+        content=json.dumps({"bookmarks": bookmark_list}),
         status_code=200,
         headers={"Content-Type": "application/json"}
     )

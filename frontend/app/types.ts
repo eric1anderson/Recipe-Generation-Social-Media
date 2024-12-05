@@ -20,3 +20,9 @@ export type Comment = {
     CommentText: string;
     UserName: string;
 }
+
+export type Bookmark = {
+    BookmarkID: string;
+    SMID: string;
+    Recipe: Recipe;
+}
