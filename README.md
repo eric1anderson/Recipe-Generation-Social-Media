@@ -1,5 +1,7 @@
 # Recipe App
 
+<iframe src="https://drive.google.com/file/d/1IuPFd4boW2R30m0xGxJ30KKvfTrpbwIp/preview" width="250" height="200" allow="autoplay"></iframe>
+
 ## Motivation
 Upon moving to Amherst, many individuals often realize that their cooking skills may need improvement. 
 They frequently find themselves searching through multiple blogs for recipes, only to discover that some required ingredients are missing or cannot be used due to allergies. This experience has inspired the idea of creating a more efficient way to find and generate recipes that align with what is already available in one's pantry. 
