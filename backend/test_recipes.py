@@ -92,7 +92,7 @@ def test_create_recipe(create_test_user):
     token = data["access_token"]
 
     headers = {"Authorization": f"Bearer {token}"}
-    response = client.post("/recipes", json={"title": "Test Recipe", "content": "Test Content", "ingredients": ["one", "two"], "userGenerated": False}, headers=headers)
+    response = client.post("/recipes", json={"title": "Test Recipe", "content": "Test Content", "ingredients": ["one", "two"], "cuisine":"random", "userGenerated": False}, headers=headers)
     assert response.status_code == 201
     data = response.json()
     assert data["message"] == "Recipe created successfully."
@@ -107,6 +107,7 @@ def test_read_all_recipes(create_test_user):
         RecipeName="Test Recipe",
         UserID=create_test_user.UserID,
         RecipeContent="Test Content",
+        Cuisine="random",
         Visibility=True
     )
     db.add(recipe)
@@ -143,6 +144,7 @@ def test_read_recipe_by_id(create_test_user):
         RecipeName="Test Recipe",
         UserID=create_test_user.UserID,
         RecipeContent="Test Content",
+        Cuisine="random",
         Visibility=True
     )
     db.add(recipe)
@@ -178,6 +180,7 @@ def test_update_recipe(create_test_user):
         RecipeName="Old Recipe",
         UserID=create_test_user.UserID,
         RecipeContent="Old Content",
+        Cuisine="random",
         Visibility=True
     )
     db.add(recipe)
@@ -213,6 +216,7 @@ def test_delete_recipe(create_test_user):
         RecipeName="Recipe to Delete",
         UserID=create_test_user.UserID,
         RecipeContent="Content to Delete",
+        Cuisine="random",
         Visibility=True
     )
     db.add(recipe)

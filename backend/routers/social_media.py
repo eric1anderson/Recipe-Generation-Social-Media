@@ -101,9 +101,10 @@ def fetch_posts(db: Session = Depends(get_db), user: User = Depends(get_current_
     # Prepare the response
     posts = []
     for post in social_media_posts:
-        ingredients = db.query(Ingredient).filter(Ingredient.RecipeID == post.recipe.RecipeID).all()
+        ingredients = db.query(Ingredient).filter(Ingredient.RecipeID == post.RecipeID).all()
         ingredient_names = [ingredient.IngredientName for ingredient in ingredients]
-
+        # get recipe based on recipeID
+        recipe = db.query(Recipe).filter(Recipe.RecipeID == post.RecipeID).first()
         allergens = db.query(Allergy).filter(Allergy.UserID == user.UserID).all()
         allergen_names = [allergy.IngredientName for allergy in allergens]
 
@@ -113,10 +114,12 @@ def fetch_posts(db: Session = Depends(get_db), user: User = Depends(get_current_
                 allergen_found = True
                 break
         if not allergen_found:
+            if not recipe:
+                continue
             posts.append({
                 "SMID": post.SMID,
                 "Likes": post.Likes,
-                "Recipe": serialize_recipe(post.recipe) if post.recipe else None
+                "Recipe": serialize_recipe(recipe) if recipe else ""
             })
 
     return Response(
