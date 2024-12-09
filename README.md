@@ -9,7 +9,7 @@ The goal of this web app is to simplify meal preparation and ensure that cooking
 
 ## Objective
 The aim of this web app is to offer users a flexible and convenient platform to explore and create customized recipes. 
-The app enables users to select recipes based on dietary preferences, allergies, or available ingredients and generates recipes through a large language model (LLM). 
+The app enables users to select recipes based on dietary preferences, allergies, or available ingredients and generates recipes through a large language model (LLM) (GPT-4o). 
 Users can share this creation, generate shopping lists from selected recipes, and streamline their cooking experience. The app aims to eliminate the frustration of missing ingredients and make cooking more accessible and enjoyable.
 
 
@@ -42,9 +42,8 @@ source venv/bin/activate # mac
 pip install -r requirements.txt
 # IMPORTANT: Add your OpenAI API key to backend/routers/recipes.py
 # Add your secret key to backend/routers/auth.py
-python3 init_db.py
-python3 test_data.py # to optionally populate the database with content and to add an admin user
 python3 main.py # should run on port 5000
+python3 test_data.py # to optionally populate the database with content and to add an admin user
 
 # testing
 # navigate to /backend
