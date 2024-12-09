@@ -1,6 +1,6 @@
 # Recipe App
 
-<iframe src="https://drive.google.com/file/d/1IuPFd4boW2R30m0xGxJ30KKvfTrpbwIp/preview" width="250" height="200" allow="autoplay"></iframe>
+[![Watch the demo](thumbnail.png)](https://drive.google.com/file/d/1IuPFd4boW2R30m0xGxJ30KKvfTrpbwIp/preview)
 
 ## Motivation
 Upon moving to Amherst, many individuals often realize that their cooking skills may need improvement. 
