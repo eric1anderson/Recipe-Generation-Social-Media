@@ -1,4 +1,12 @@
 - Aparajith Raghuvir:
+  - Tech stack: python, fastapi, sqlalchemy, nextjs
+  - Created the LLM recipe generator workflow, the LLM recipe generator endpoint.
+  - Created all recipe related endpoints
+  - Created all allergy endpoints
+  - Integrated recipe and LLM gen endpoints with the frontend
+  - Integrated the admin page workflow with admin and recipe edit, delete endpoints
+  - Created tests for recipe and LLM recipe generation related endpoints
+  - Created the final video submission
 - Jeet Sharma:
 - Tarun Gowda:
 - Sheng-Kai Wen:
