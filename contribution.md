@@ -10,6 +10,12 @@
 - Jeet Sharma:
 - Tarun Gowda:
 - Sheng-Kai Wen:
+  - Tech stack: Next.js, Tailwind CSS, TypeScript
+  - Developed Navbar, Footer, CommentList, DialogBox, RecipeList and RecipePageList components.
+  - Implemented page templates for admin page, edit-recipe-page, shoppinglist-page, upload-recipe, user-page and user-profile page to facilitate integration.
+  - Implemented the confirm password functionality for the registration page.
+  - Created the user-profile page, displaying the user's name and allowing them to add allergy ingredients.
+  - Built the shopping-list page, enabling users to view, update, and delete items in their shopping list.
 - Eric Anderson:
   - Tech stack: python, fastapi, sqlalchemy
   - Created models.py which defines the database used throughout the project. Defines Users, Recipes, Ingredients, Allergy, Social Media, Comments, Bookmarks, Shopping List Items. Used by every backend endpoint.
