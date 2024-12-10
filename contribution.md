@@ -1,0 +1,11 @@
+- Aparajith Raghuvir:
+- Jeet Sharma:
+- Tarun Gowda:
+- Sheng-Kai Wen:
+- Eric Anderson:
+  - Tech stack: python, fastapi, sqlalchemy
+  - Created models.py which defines the database used throughout the project. Defines Users, Recipes, Ingredients, Allergy, Social Media, Comments, Bookmarks, Shopping List Items. Used by every backend endpoint.
+  - Created all authorization endpoints in auth.py which is connected to frontend login page created by Tarun. Auth is used to get current users information in all other backend endpoints.
+  - Created all shopping list endpoints in shoppinglist.py which is connected to frontend pages created by Sheng-Kai. Functionality allows users to export recipes to shopping list, edit, and save shopping lists.
+  - Created test_auth.py and test_shopping_list.py to ensure all auth and shopping list endpoints are running properly.
+  - Created test_data.py which adds an admin user to the program.
