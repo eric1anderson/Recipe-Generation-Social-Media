@@ -7,7 +7,17 @@
   - Integrated the admin page workflow with admin and recipe edit, delete endpoints
   - Created tests for recipe and LLM recipe generation related endpoints
   - Created the final video submission
-- Jeet Sharma:
+- Jeet Sharma:  
+  - Tech stack: Python, FastAPI, SQLAlchemy, NextJs
+  - Developed the backend for social media functionality, including:  
+    - Social media feed with the ability to auto filter recipes based on user allergens.  
+    - Features to comment on recipes in the social media feed.  
+    - Feature to like recipes on the social media feed.  
+    - Implemented recipe bookmarking functionality, allowing users to save recipes to a private folder.  
+  - Integrated all social media-related endpoints with the frontend templates.  
+  - Created test files for social media endpoints.  
+  - Contributed to `models.py` by creating models for social media features.  
+
 - Tarun Gowda:
 - Sheng-Kai Wen:
   - Tech stack: Next.js, Tailwind CSS, TypeScript
