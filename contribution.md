@@ -19,6 +19,15 @@
   - Contributed to `models.py` by creating models for social media features.  
 
 - Tarun Gowda:
+  - Tech stack: Python, FastAPI, Next.js, Tailwind CSS
+  - Designed the UI/UX for the website.
+  - Wrote the verify endpoint for bearer token verification.
+  - Created authorization and authentication in frontend with route protection and session.
+  - Role based authorization.
+  - Created login, signup, bookmark pages.
+  - Created filters for the main page.
+  - Upload recipes for user.
+  - Final optimization, type language, UI changes.
 - Sheng-Kai Wen:
   - Tech stack: Next.js, Tailwind CSS, TypeScript
   - Developed Navbar, Footer, CommentList, DialogBox, RecipeList and RecipePageList components.
